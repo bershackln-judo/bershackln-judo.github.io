@@ -1,0 +1,17 @@
+{
+  "name": "Magyarázó",
+  "short_name": "Magyarázó",
+  "description": "Венгерский для жизни в Венгрии",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F5F0",
+  "theme_color": "#4A7C59",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,3687 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Magyarázó</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4A7C59" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --orange: #4A7C59;
+      --graphite: #1F2E1F;
+      --bg: #F2F5F0;
+      --nav-height: 64px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--graphite);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    main {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Screens ── */
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .screen.active {
+      display: flex;
+      animation: screenIn 0.2s ease both;
+    }
+
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .screen-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--graphite);
+      letter-spacing: -0.5px;
+    }
+
+    .screen-subtitle {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    /* ── Verbs screen ── */
+    #screen-verbs {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+    }
+
+    .verbs-header {
+      padding: 20px 16px 12px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .verbs-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--graphite);
+      margin-bottom: 12px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #ddd6ca;
+      border-radius: 12px;
+      background: #fff;
+      font-size: 15px;
+      color: var(--graphite);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-input:focus {
+      border-color: var(--orange);
+    }
+
+    .search-input::placeholder {
+      color: #bbb;
+    }
+
+    .verbs-list {
+      padding: 4px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .verb-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: border-color 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .verb-card:active {
+      transform: scale(0.98);
+      border-color: var(--orange);
+    }
+
+    .verb-card-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .verb-hu {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--graphite);
+    }
+
+    .verb-ru {
+      font-size: 13px;
+      color: #888;
+    }
+
+    .verb-arrow {
+      color: #ccc;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .no-results {
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
+      padding: 32px 0;
+    }
+
+    /* ── Home screen ── */
+    #screen-home {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+    }
+
+    .home-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 52px 20px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .home-title-block { text-align: center; }
+
+    .home-app-name {
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--orange);
+      letter-spacing: -1.5px;
+    }
+
+    .home-tagline {
+      font-size: 14px;
+      color: #999;
+      margin-top: 6px;
+    }
+
+    .home-wod {
+      background: #fff;
+      border-radius: 20px;
+      padding: 22px 20px 18px;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .home-wod-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 6px;
+    }
+
+    .home-wod-hu {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--graphite);
+      letter-spacing: -1px;
+    }
+
+    .home-wod-transcription {
+      font-size: 13px;
+      color: #aaa;
+      font-style: italic;
+    }
+
+    .home-wod-ru {
+      font-size: 17px;
+      color: #777;
+      margin-top: 2px;
+    }
+
+    .home-wod-listen {
+      margin-top: 14px;
+      padding: 10px 24px;
+      border-radius: 50px;
+      border: none;
+      background: var(--orange);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: opacity 0.15s;
+    }
+
+    .home-wod-listen:active { opacity: 0.8; }
+    .home-wod-listen svg { width: 14px; height: 14px; fill: #fff; }
+
+    .home-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .home-card {
+      background: #fff;
+      border-radius: 18px;
+      border: none;
+      padding: 18px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      cursor: pointer;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.12s, box-shadow 0.12s;
+      text-align: left;
+      width: 100%;
+    }
+
+    .home-card:active {
+      transform: scale(0.96);
+      box-shadow: 0 3px 14px rgba(74,124,89,0.18);
+    }
+
+    .home-card-icon { font-size: 26px; margin-bottom: 6px; }
+
+    .home-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--graphite);
+    }
+
+    .home-card-sub { font-size: 11px; color: #aaa; }
+
+    .home-dict-info {
+      text-align: center;
+      font-size: 13px;
+      color: #bbb;
+      padding-bottom: 4px;
+    }
+
+    /* ── Nouns screen ── */
+    #screen-nouns {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+    }
+
+    .nouns-header {
+      padding: 20px 16px 12px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nouns-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--graphite);
+      margin-bottom: 12px;
+    }
+
+    .nouns-list {
+      padding: 4px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── Assistant screen ── */
+    #screen-assistant {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+    }
+
+    .asst-header {
+      padding: 20px 16px 0;
+      flex-shrink: 0;
+    }
+
+    .asst-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--graphite);
+    }
+
+    .asst-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .asst-mic-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .asst-mic-btn {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: none;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(74,124,89,0.38);
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.2s, transform 0.1s;
+      position: relative;
+    }
+
+    .asst-mic-btn:active { transform: scale(0.94); }
+
+    .asst-mic-btn::before {
+      content: '';
+      position: absolute;
+      inset: -10px;
+      border-radius: 50%;
+      border: 2.5px solid var(--orange);
+      opacity: 0;
+      animation: asst-pulse 2.2s ease-out infinite;
+    }
+
+    @keyframes asst-pulse {
+      0%   { opacity: 0.55; transform: scale(1); }
+      100% { opacity: 0;    transform: scale(1.45); }
+    }
+
+    .asst-mic-btn.recording {
+      background: #c83232;
+      box-shadow: 0 6px 24px rgba(200,50,50,0.38);
+    }
+
+    .asst-mic-btn.recording::before {
+      border-color: #c83232;
+      animation: asst-pulse-fast 0.75s ease-out infinite;
+    }
+
+    @keyframes asst-pulse-fast {
+      0%   { opacity: 0.7; transform: scale(1); }
+      100% { opacity: 0;   transform: scale(1.55); }
+    }
+
+    .asst-mic-btn svg {
+      width: 38px;
+      height: 38px;
+      fill: #fff;
+      flex-shrink: 0;
+    }
+
+    .asst-mic-status {
+      font-size: 13px;
+      color: #aaa;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    .asst-mic-status.active { color: #c83232; font-weight: 600; }
+
+    .asst-buttons-row {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .asst-cam-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .asst-cam-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: none;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s, box-shadow 0.15s;
+      position: relative;
+    }
+
+    .asst-cam-btn:active {
+      transform: scale(0.94);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .asst-cam-btn svg {
+      width: 30px;
+      height: 30px;
+      stroke: var(--orange);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .asst-cam-label {
+      font-size: 13px;
+      color: #aaa;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    .asst-img-preview {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      background: #f0ece4;
+    }
+
+    .asst-img-preview img {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .asst-ocr-bar {
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #888;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8f6f2;
+    }
+
+    .asst-ocr-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #e0dbd2;
+      border-top-color: var(--orange);
+      border-radius: 50%;
+      animation: asst-spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .asst-input-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .asst-input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1.5px solid #ddd6ca;
+      border-radius: 14px;
+      background: #fff;
+      font-size: 15px;
+      color: var(--graphite);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .asst-input:focus { border-color: var(--orange); }
+    .asst-input::placeholder { color: #bbb; }
+
+    .asst-send-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      border: none;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+
+    .asst-send-btn:active { opacity: 0.75; }
+    .asst-send-btn svg { width: 22px; height: 22px; fill: #fff; }
+
+    .asst-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .asst-spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid #e0dbd2;
+      border-top-color: var(--orange);
+      border-radius: 50%;
+      animation: asst-spin 0.75s linear infinite;
+    }
+
+    @keyframes asst-spin { to { transform: rotate(360deg); } }
+    .asst-loading p { font-size: 13px; color: #aaa; }
+
+    .asst-result {
+      width: 100%;
+      background: #fff;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+    }
+
+    .asst-result-word {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--orange);
+      letter-spacing: -0.5px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .asst-result-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .asst-result-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--orange);
+      min-width: 90px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .asst-result-value {
+      font-size: 14px;
+      color: var(--graphite);
+      line-height: 1.55;
+    }
+
+    .asst-result-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .asst-result-btn {
+      flex: 1;
+      padding: 11px 8px;
+      border-radius: 12px;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+
+    .asst-result-btn:active { opacity: 0.75; }
+    .asst-result-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .asst-listen-result-btn {
+      background: rgba(74,124,89,0.1);
+      color: var(--orange);
+    }
+
+    .asst-listen-result-btn svg { fill: var(--orange); }
+
+    .asst-save-result-btn { background: var(--orange); color: #fff; }
+
+    .asst-save-result-btn svg {
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .asst-save-result-btn.saved { background: #7a9e8a; }
+
+    .asst-settings {
+      flex-shrink: 0;
+      border-top: 1px solid #e0dbd2;
+      background: var(--bg);
+    }
+
+    .asst-settings-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .asst-settings-toggle span:first-child {
+      font-size: 13px;
+      font-weight: 600;
+      color: #999;
+    }
+
+    .asst-settings-arrow {
+      font-size: 18px;
+      color: #bbb;
+      transition: transform 0.2s;
+      display: inline-block;
+    }
+
+    .asst-settings-arrow.open { transform: rotate(90deg); }
+
+    .asst-settings-body {
+      display: none;
+      padding: 0 16px 16px;
+    }
+
+    .asst-settings-body.open { display: block; }
+
+    .asst-settings-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .asst-api-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #ddd6ca;
+      border-radius: 12px;
+      background: #fff;
+      font-size: 13px;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+      color: var(--graphite);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .asst-api-input:focus { border-color: var(--orange); }
+
+    .asst-settings-hint {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+
+    .asst-settings-hint a { color: var(--orange); text-decoration: none; }
+
+    /* ── Filter tabs ── */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    .filter-tabs::-webkit-scrollbar { display: none; }
+
+    .filter-tab {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid #ddd6ca;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .filter-tab.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 88dvh;
+      overflow-y: auto;
+      padding: 0 20px 32px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: #e0dbd2;
+      border-radius: 2px;
+      margin: 12px auto 20px;
+    }
+
+    .modal-word {
+      font-size: 40px;
+      font-weight: 800;
+      color: var(--orange);
+      letter-spacing: -1px;
+      text-align: center;
+    }
+
+    .modal-transcription {
+      text-align: center;
+      font-size: 14px;
+      color: #aaa;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .modal-translation {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--graphite);
+      margin-top: 8px;
+    }
+
+    .modal-listen-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 20px auto 0;
+      padding: 12px 28px;
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+
+    .modal-listen-btn:active {
+      opacity: 0.8;
+    }
+
+    .modal-listen-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+      flex-shrink: 0;
+    }
+
+    .modal-divider {
+      height: 1px;
+      background: #f0ece4;
+      margin: 24px 0;
+    }
+
+    .modal-examples-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #bbb;
+      margin-bottom: 14px;
+    }
+
+    .example-item {
+      margin-bottom: 14px;
+    }
+
+    .example-hu {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--graphite);
+    }
+
+    .example-ru {
+      font-size: 13px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .modal-save-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      margin-top: 24px;
+      background: transparent;
+      border: 2px solid var(--orange);
+      border-radius: 14px;
+      color: var(--orange);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .modal-save-btn.saved {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .modal-save-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    /* ── Dictionary screen ── */
+    #screen-dictionary {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+    }
+
+    .dict-header {
+      padding: 20px 16px 14px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .dict-title-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .dict-title-row h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--graphite);
+    }
+
+    .dict-count {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--orange);
+    }
+
+    .dict-list {
+      flex: 1;
+      padding: 4px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .dict-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 64px 32px;
+      text-align: center;
+    }
+
+    .dict-empty-icon {
+      font-size: 52px;
+      line-height: 1;
+      opacity: 0.25;
+    }
+
+    .dict-empty p {
+      color: #aaa;
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 240px;
+    }
+
+    .dict-item {
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .dict-item-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .dict-item-hu {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--graphite);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dict-item-ru {
+      font-size: 13px;
+      color: #888;
+    }
+
+    .dict-item-date {
+      font-size: 11px;
+      color: #bbb;
+      margin-top: 1px;
+    }
+
+    .dict-item-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .dict-action-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .dict-action-btn:active {
+      opacity: 0.7;
+      transform: scale(0.92);
+    }
+
+    .dict-listen-btn {
+      background: rgba(74,124,89,0.12);
+    }
+
+    .dict-listen-btn svg {
+      width: 17px;
+      height: 17px;
+      fill: var(--orange);
+      stroke: none;
+    }
+
+    .dict-delete-btn {
+      background: rgba(200,50,50,0.08);
+    }
+
+    .dict-delete-btn svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: #c83232;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .dict-add-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 50px;
+      border: none;
+      background: var(--orange);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+
+    .dict-add-btn:active { opacity: 0.8; }
+
+    .dict-add-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      flex-shrink: 0;
+    }
+
+    /* Add-word form overlay */
+    .dict-form-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .dict-form-overlay.open { display: flex; }
+
+    .dict-form-sheet {
+      background: #fff;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 420px;
+      padding: 28px 24px 28px;
+      transform: scale(0.94);
+      opacity: 0;
+      transition: transform 0.22s cubic-bezier(0.32,0.72,0,1), opacity 0.22s ease;
+    }
+
+    .dict-form-overlay.open .dict-form-sheet {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .dict-form-handle { display: none; }
+
+    .dict-form-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--graphite);
+      margin-bottom: 20px;
+    }
+
+    .dict-form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 6px;
+    }
+
+    .dict-form-input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1.5px solid #ddd6ca;
+      border-radius: 14px;
+      background: var(--bg);
+      font-size: 16px;
+      color: var(--graphite);
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 16px;
+    }
+
+    .dict-form-input:focus { border-color: var(--orange); }
+    .dict-form-input::placeholder { color: #ccc; }
+
+    .dict-form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .dict-form-cancel {
+      flex: 1;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1.5px solid #ddd6ca;
+      background: transparent;
+      color: #aaa;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+
+    .dict-form-cancel:active { background: #f0ece4; }
+
+    .dict-form-save {
+      flex: 2;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      background: var(--orange);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+
+    .dict-form-save:active { opacity: 0.8; }
+
+    .dict-form-save:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    /* Direction toggle */
+    .dict-dir-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .dict-dir-btn {
+      flex: 1;
+      padding: 10px 8px;
+      border-radius: 12px;
+      border: 1.5px solid #ddd6ca;
+      background: transparent;
+      color: #aaa;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .dict-dir-btn.active {
+      border-color: var(--orange);
+      background: rgba(74,124,89,0.09);
+      color: var(--orange);
+    }
+
+    .dict-dir-flag {
+      font-size: 16px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .dict-dir-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(74,124,89,0.1);
+      color: var(--orange);
+      margin-top: 3px;
+    }
+
+    .dict-item-manual-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--orange);
+      background: rgba(74,124,89,0.1);
+      border-radius: 4px;
+      padding: 2px 5px;
+      margin-top: 3px;
+      align-self: flex-start;
+    }
+
+    .dict-footer {
+      padding: 10px 16px 16px;
+      background: var(--bg);
+      border-top: 1px solid #e0dbd2;
+      flex-shrink: 0;
+    }
+
+    .dict-clear-btn {
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 1.5px solid #c83232;
+      border-radius: 14px;
+      color: #c83232;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .dict-clear-btn:active {
+      background: #c83232;
+      color: #fff;
+    }
+
+    /* ── Bottom nav ── */
+    nav {
+      height: var(--nav-height);
+      background: #fff;
+      border-top: 1px solid #e0dbd2;
+      display: flex;
+      align-items: stretch;
+      flex-shrink: 0;
+    }
+
+    .nav-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px 4px;
+      color: #aaa;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-btn.active {
+      color: var(--orange);
+    }
+
+    .nav-btn svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Screens ── -->
+  <main>
+    <section class="screen active" id="screen-home">
+      <div class="home-body">
+
+        <div class="home-title-block">
+          <h1 class="home-app-name">Magyarázó</h1>
+          <p class="home-tagline">Венгерский для жизни в Венгрии</p>
+        </div>
+
+        <div class="home-wod">
+          <div class="home-wod-label">Слово дня</div>
+          <div class="home-wod-hu" id="wod-hu">—</div>
+          <div class="home-wod-transcription" id="wod-transcription"></div>
+          <div class="home-wod-ru" id="wod-ru"></div>
+          <button class="home-wod-listen" id="wod-listen-btn">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="12" y1="19" x2="12" y2="23" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="8"  y1="23" x2="16" y2="23" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            ПОСЛУШАТЬ
+          </button>
+        </div>
+
+        <div class="home-cards">
+          <button class="home-card" data-target="screen-verbs">
+            <span class="home-card-icon">⚡</span>
+            <span class="home-card-title">Глаголы</span>
+            <span class="home-card-sub">100 слов</span>
+          </button>
+          <button class="home-card" data-target="screen-nouns">
+            <span class="home-card-icon">📦</span>
+            <span class="home-card-title">Существительные</span>
+            <span class="home-card-sub" id="home-nouns-count">— слов</span>
+          </button>
+          <button class="home-card" data-target="screen-assistant">
+            <span class="home-card-icon">🎙️</span>
+            <span class="home-card-title">Помощник</span>
+            <span class="home-card-sub">спроси что угодно</span>
+          </button>
+          <button class="home-card" data-target="screen-dictionary">
+            <span class="home-card-icon">📚</span>
+            <span class="home-card-title">Словарь</span>
+            <span class="home-card-sub" id="home-dict-sub">сохранённые слова</span>
+          </button>
+        </div>
+
+        <p class="home-dict-info" id="home-dict-info"></p>
+
+      </div>
+    </section>
+
+    <section class="screen" id="screen-verbs">
+      <div class="verbs-header">
+        <h1>Глаголы · Igék</h1>
+        <input
+          class="search-input"
+          type="search"
+          placeholder="Поиск глагола..."
+          id="verb-search"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+      </div>
+      <div class="verbs-list" id="verbs-list"></div>
+    </section>
+
+    <section class="screen" id="screen-nouns">
+      <div class="nouns-header">
+        <h1>Существительные · Főnevek</h1>
+        <div class="filter-tabs" id="noun-filter-tabs">
+          <button class="filter-tab active" data-topic="all">Все</button>
+          <button class="filter-tab" data-topic="people">Люди</button>
+          <button class="filter-tab" data-topic="body">Тело и здоровье</button>
+          <button class="filter-tab" data-topic="food">Еда и напитки</button>
+          <button class="filter-tab" data-topic="home">Дом и быт</button>
+          <button class="filter-tab" data-topic="city">Город и транспорт</button>
+          <button class="filter-tab" data-topic="work">Работа и инструменты</button>
+          <button class="filter-tab" data-topic="time">Время</button>
+          <button class="filter-tab" data-topic="nature">Природа</button>
+          <button class="filter-tab" data-topic="shop">Магазин</button>
+          <button class="filter-tab" data-topic="docs">Документы</button>
+          <button class="filter-tab" data-topic="emotions">Эмоции</button>
+        </div>
+      </div>
+      <div class="nouns-list" id="nouns-list"></div>
+    </section>
+
+    <section class="screen" id="screen-assistant">
+      <div class="asst-header">
+        <h1>Помощник · Asszisztens</h1>
+      </div>
+
+      <div class="asst-body">
+        <!-- Mic + Camera row -->
+        <div class="asst-buttons-row">
+          <div class="asst-mic-wrap">
+            <button class="asst-mic-btn" id="asst-mic-btn" aria-label="Запись голоса">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="12" y1="19" x2="12" y2="23" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="8"  y1="23" x2="16" y2="23" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <p class="asst-mic-status" id="asst-mic-status">Нажмите чтобы говорить</p>
+          </div>
+
+          <div class="asst-cam-wrap">
+            <button class="asst-cam-btn" id="asst-cam-btn" aria-label="Сфотографировать">
+              <svg viewBox="0 0 24 24">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
+            <p class="asst-cam-label">Сфотографировать</p>
+          </div>
+        </div>
+
+        <!-- Hidden camera input -->
+        <input type="file" id="asst-cam-input" accept="image/*" capture="environment" style="display:none" />
+
+        <!-- Image preview + OCR status -->
+        <div class="asst-img-preview" id="asst-img-preview" style="display:none">
+          <img id="asst-preview-img" alt="Фото" />
+          <div class="asst-ocr-bar" id="asst-ocr-bar">
+            <div class="asst-ocr-spinner"></div>
+            <span id="asst-ocr-text">Читаю текст...</span>
+          </div>
+        </div>
+
+        <!-- Text input -->
+        <div class="asst-input-row">
+          <input
+            class="asst-input" id="asst-input"
+            type="text"
+            placeholder="Введите венгерское слово или фразу..."
+            autocomplete="off" autocorrect="off" spellcheck="false"
+          />
+          <button class="asst-send-btn" id="asst-send-btn" aria-label="Отправить">
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="asst-loading" id="asst-loading" style="display:none">
+          <div class="asst-spinner"></div>
+          <p>Запрашиваю ответ...</p>
+        </div>
+
+        <!-- Result card -->
+        <div class="asst-result" id="asst-result" style="display:none">
+          <div class="asst-result-word" id="asst-result-word"></div>
+          <div id="asst-result-content"></div>
+          <div class="asst-result-actions" id="asst-result-actions">
+            <button class="asst-result-btn asst-listen-result-btn" id="asst-listen-result-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="12" y1="19" x2="12" y2="23" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="8"  y1="23" x2="16" y2="23" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>ПОСЛУШАТЬ</span>
+            </button>
+            <button class="asst-result-btn asst-save-result-btn" id="asst-save-result-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              <span id="asst-save-label">СОХРАНИТЬ</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="asst-settings">
+        <div class="asst-settings-toggle" id="asst-settings-toggle">
+          <span>Настройки API</span>
+          <span class="asst-settings-arrow" id="asst-settings-arrow">›</span>
+        </div>
+        <div class="asst-settings-body" id="asst-settings-body">
+          <label class="asst-settings-label" for="asst-api-input">Gemini API ключ</label>
+          <input
+            class="asst-api-input" id="asst-api-input"
+            type="password"
+            placeholder="AIza..."
+            autocomplete="off"
+          />
+          <p class="asst-settings-hint">
+            Бесплатный ключ на
+            <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer">aistudio.google.com</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-dictionary">
+      <div class="dict-header">
+        <div class="dict-title-row">
+          <h1>Словарь · Szótár</h1>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="dict-count" id="dict-count"></span>
+            <button class="dict-add-btn" id="dict-add-btn">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              ДОБАВИТЬ
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="dict-list" id="dict-list"></div>
+      <div class="dict-footer" id="dict-footer">
+        <button class="dict-clear-btn" id="dict-clear-btn">ОЧИСТИТЬ ВСЁ</button>
+      </div>
+    </section>
+
+    <!-- ── Add-word form overlay ── -->
+    <div class="dict-form-overlay" id="dict-form-overlay">
+      <div class="dict-form-sheet">
+        <div class="dict-form-handle"></div>
+        <div class="dict-form-title">Добавить слово</div>
+
+        <!-- Direction toggle -->
+        <div class="dict-dir-toggle">
+          <button class="dict-dir-btn active" id="dict-dir-hu2ru">
+            <span class="dict-dir-flag">🇭🇺 → 🇷🇺</span>
+            Венгерский → Русский
+          </button>
+          <button class="dict-dir-btn" id="dict-dir-ru2hu">
+            <span class="dict-dir-flag">🇷🇺 → 🇭🇺</span>
+            Русский → Венгерский
+          </button>
+        </div>
+
+        <label class="dict-form-label" id="dict-form-label1" for="dict-form-field1">Венгерское слово</label>
+        <input
+          class="dict-form-input" id="dict-form-field1"
+          type="text"
+          placeholder="например: köszönöm"
+          autocomplete="off" autocorrect="off" spellcheck="false"
+        />
+        <label class="dict-form-label" id="dict-form-label2" for="dict-form-field2">Перевод на русский</label>
+        <input
+          class="dict-form-input" id="dict-form-field2"
+          type="text"
+          placeholder="например: спасибо"
+          autocomplete="off" spellcheck="false"
+        />
+        <div class="dict-form-actions">
+          <button class="dict-form-cancel" id="dict-form-cancel">ОТМЕНА</button>
+          <button class="dict-form-save" id="dict-form-save" disabled>СОХРАНИТЬ</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Modal ── -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-word" id="modal-word"></div>
+      <div class="modal-transcription" id="modal-transcription"></div>
+      <div class="modal-translation" id="modal-translation"></div>
+
+      <button class="modal-listen-btn" id="modal-listen-btn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="19" x2="12" y2="23" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8" y1="23" x2="16" y2="23" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        ПОСЛУШАТЬ
+      </button>
+
+      <div class="modal-divider"></div>
+
+      <div class="modal-examples-title">Примеры</div>
+      <div id="modal-examples"></div>
+
+      <button class="modal-save-btn" id="modal-save-btn">
+        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        <span id="modal-save-label">СОХРАНИТЬ В СЛОВАРЬ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Bottom Navigation ── -->
+  <nav>
+    <button class="nav-btn active" data-target="screen-home" aria-label="Главная">
+      <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+      <span class="nav-label">Главная</span>
+    </button>
+
+    <button class="nav-btn" data-target="screen-verbs" aria-label="Глаголы">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M18 14l3 3-3 3"/></svg>
+      <span class="nav-label">Глаголы</span>
+    </button>
+
+    <button class="nav-btn" data-target="screen-nouns" aria-label="Существительные">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+      <span class="nav-label">Слова</span>
+    </button>
+
+    <button class="nav-btn" data-target="screen-assistant" aria-label="Помощник">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+      <span class="nav-label">Помощник</span>
+    </button>
+
+    <button class="nav-btn" data-target="screen-dictionary" aria-label="Словарь">
+      <svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h13a1 1 0 011 1v14"/><path d="M4 19a2 2 0 002 2h13a1 1 0 001-1v-1"/><path d="M8 7h8M8 11h5"/></svg>
+      <span class="nav-label">Словарь</span>
+    </button>
+  </nav>
+
+  <script>
+    /* ── Navigation ── */
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const screens = document.querySelectorAll('.screen');
+
+    navBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        screens.forEach(s => s.classList.remove('active'));
+        navBtns.forEach(b => b.classList.remove('active'));
+        document.getElementById(btn.dataset.target).classList.add('active');
+        btn.classList.add('active');
+      });
+    });
+
+    /* ── Verb data ── */
+    const verbs = [
+      {
+        hu: 'van',
+        ru: 'быть',
+        transcription: '[вон]',
+        examples: [
+          { hu: 'Ez jó.', ru: 'Это хорошо.' },
+          { hu: 'Ő tanár.', ru: 'Он/она учитель.' },
+          { hu: 'Itthon van.', ru: 'Он/она дома.' },
+        ]
+      },
+      {
+        hu: 'kér',
+        ru: 'просить, заказывать',
+        transcription: '[кэр]',
+        examples: [
+          { hu: 'Kérek egy kávét.', ru: 'Мне, пожалуйста, кофе.' },
+          { hu: 'Mit kérsz?', ru: 'Что ты хочешь?' },
+          { hu: 'Kérem a számlát.', ru: 'Счёт, пожалуйста.' },
+        ]
+      },
+      {
+        hu: 'megy',
+        ru: 'идти',
+        transcription: '[медь]',
+        examples: [
+          { hu: 'Megyek haza.', ru: 'Я иду домой.' },
+          { hu: 'Hova mész?', ru: 'Куда ты идёшь?' },
+          { hu: 'Ő elmegy a boltba.', ru: 'Он идёт в магазин.' },
+        ]
+      },
+      {
+        hu: 'jön',
+        ru: 'приходить',
+        transcription: '[йён]',
+        examples: [
+          { hu: 'Jövök!', ru: 'Иду! (сейчас приду)' },
+          { hu: 'Mikor jössz?', ru: 'Когда ты придёшь?' },
+          { hu: 'Ő holnap jön.', ru: 'Он придёт завтра.' },
+        ]
+      },
+      {
+        hu: 'tud',
+        ru: 'знать, мочь',
+        transcription: '[туд]',
+        examples: [
+          { hu: 'Tudom.', ru: 'Я знаю.' },
+          { hu: 'Tudsz magyarul?', ru: 'Ты знаешь венгерский?' },
+          { hu: 'Nem tudok menni.', ru: 'Я не могу идти.' },
+        ]
+      },
+      {
+        hu: 'kell',
+        ru: 'нужно, надо',
+        transcription: '[кэлл]',
+        examples: [
+          { hu: 'Menni kell.', ru: 'Нужно идти.' },
+          { hu: 'Kell egy perc.', ru: 'Нужна минута.' },
+          { hu: 'Nem kell.', ru: 'Не нужно.' },
+        ]
+      },
+      {
+        hu: 'ad',
+        ru: 'давать',
+        transcription: '[од]',
+        examples: [
+          { hu: 'Add ide!', ru: 'Дай сюда!' },
+          { hu: 'Adok neked valamit.', ru: 'Я дам тебе кое-что.' },
+          { hu: 'Ő pénzt ad.', ru: 'Он даёт деньги.' },
+        ]
+      },
+      {
+        hu: 'vesz',
+        ru: 'брать, покупать',
+        transcription: '[вэс]',
+        examples: [
+          { hu: 'Veszek kenyeret.', ru: 'Я куплю хлеб.' },
+          { hu: 'Mit veszel?', ru: 'Что ты берёшь?' },
+          { hu: 'Vegyél tejet!', ru: 'Купи молока!' },
+        ]
+      },
+      {
+        hu: 'mond',
+        ru: 'говорить, сказать',
+        transcription: '[монд]',
+        examples: [
+          { hu: 'Mit mondasz?', ru: 'Что ты говоришь?' },
+          { hu: 'Mondd meg!', ru: 'Скажи мне!' },
+          { hu: 'Ő azt mondja, hogy…', ru: 'Он говорит, что…' },
+        ]
+      },
+      {
+        hu: 'lát',
+        ru: 'видеть',
+        transcription: '[лат]',
+        examples: [
+          { hu: 'Látom.', ru: 'Я вижу.' },
+          { hu: 'Látod azt?', ru: 'Ты это видишь?' },
+          { hu: 'Nem látok semmit.', ru: 'Я ничего не вижу.' },
+        ]
+      },
+      {
+        hu: 'fizet',
+        ru: 'платить',
+        transcription: '[физэт]',
+        examples: [
+          { hu: 'Fizetek.', ru: 'Я плачу.' },
+          { hu: 'Ki fizet?', ru: 'Кто платит?' },
+          { hu: 'Kártyával fizetek.', ru: 'Я плачу картой.' },
+        ]
+      },
+      {
+        hu: 'eszik',
+        ru: 'есть (принимать пищу)',
+        transcription: '[эсик]',
+        examples: [
+          { hu: 'Mit eszel?', ru: 'Что ты ешь?' },
+          { hu: 'Eszem egy szendvicset.', ru: 'Я ем бутерброд.' },
+          { hu: 'Ő sokat eszik.', ru: 'Он много ест.' },
+        ]
+      },
+      {
+        hu: 'iszik',
+        ru: 'пить',
+        transcription: '[ишик]',
+        examples: [
+          { hu: 'Mit iszol?', ru: 'Что ты пьёшь?' },
+          { hu: 'Iszom egy pohár vizet.', ru: 'Я пью стакан воды.' },
+          { hu: 'Ő kávét iszik.', ru: 'Он пьёт кофе.' },
+        ]
+      },
+      {
+        hu: 'segít',
+        ru: 'помогать',
+        transcription: '[шэгит]',
+        examples: [
+          { hu: 'Segítek!', ru: 'Я помогу!' },
+          { hu: 'Tudsz segíteni?', ru: 'Ты можешь помочь?' },
+          { hu: 'Ő mindig segít.', ru: 'Он всегда помогает.' },
+        ]
+      },
+      {
+        hu: 'ért',
+        ru: 'понимать',
+        transcription: '[эрт]',
+        examples: [
+          { hu: 'Értem.', ru: 'Я понимаю.' },
+          { hu: 'Érted?', ru: 'Ты понимаешь?' },
+          { hu: 'Nem értem.', ru: 'Я не понимаю.' },
+        ]
+      },
+      {
+        hu: 'akar',
+        ru: 'хотеть',
+        transcription: '[окор]',
+        examples: [
+          { hu: 'Mit akarsz?', ru: 'Что ты хочешь?' },
+          { hu: 'Akarok menni.', ru: 'Я хочу идти.' },
+          { hu: 'Ő nem akar várni.', ru: 'Он не хочет ждать.' },
+        ]
+      },
+      {
+        hu: 'csinál',
+        ru: 'делать',
+        transcription: '[чинал]',
+        examples: [
+          { hu: 'Mit csinálsz?', ru: 'Что ты делаешь?' },
+          { hu: 'Csinálok valamit.', ru: 'Я делаю кое-что.' },
+          { hu: 'Mit csináljak?', ru: 'Что мне делать?' },
+        ]
+      },
+      {
+        hu: 'hall',
+        ru: 'слышать',
+        transcription: '[холл]',
+        examples: [
+          { hu: 'Hallom.', ru: 'Я слышу.' },
+          { hu: 'Hallod?', ru: 'Ты слышишь?' },
+          { hu: 'Nem hallok semmit.', ru: 'Я ничего не слышу.' },
+        ]
+      },
+      {
+        hu: 'keres',
+        ru: 'искать',
+        transcription: '[кэрэш]',
+        examples: [
+          { hu: 'Mit keresel?', ru: 'Что ты ищешь?' },
+          { hu: 'A kulcsomat keresem.', ru: 'Я ищу свои ключи.' },
+          { hu: 'Ő munkát keres.', ru: 'Он ищет работу.' },
+        ]
+      },
+      {
+        hu: 'vár',
+        ru: 'ждать',
+        transcription: '[вар]',
+        examples: [
+          { hu: 'Várok rád.', ru: 'Я жду тебя.' },
+          { hu: 'Várj!', ru: 'Подожди!' },
+          { hu: 'Meddig vársz?', ru: 'Как долго ты ждёшь?' },
+        ]
+      },
+      {
+        hu: 'alszik',
+        ru: 'спать',
+        transcription: '[олсик]',
+        examples: [
+          { hu: 'Alszom.', ru: 'Я сплю.' },
+          { hu: 'Jól aludtál?', ru: 'Ты хорошо поспал?' },
+          { hu: 'A gyerek alszik.', ru: 'Ребёнок спит.' },
+        ]
+      },
+      {
+        hu: 'ül',
+        ru: 'сидеть',
+        transcription: '[юль]',
+        examples: [
+          { hu: 'Ülök a padon.', ru: 'Я сижу на скамейке.' },
+          { hu: 'Ülj le!', ru: 'Садись!' },
+          { hu: 'Hol ülsz?', ru: 'Где ты сидишь?' },
+        ]
+      },
+      {
+        hu: 'áll',
+        ru: 'стоять',
+        transcription: '[алл]',
+        examples: [
+          { hu: 'Állok a buszmegállóban.', ru: 'Я стою на автобусной остановке.' },
+          { hu: 'Állj meg!', ru: 'Стой!' },
+          { hu: 'Ő az ajtóban áll.', ru: 'Он стоит в дверях.' },
+        ]
+      },
+      {
+        hu: 'jár',
+        ru: 'ходить',
+        transcription: '[яр]',
+        examples: [
+          { hu: 'Gyalog járok.', ru: 'Я хожу пешком.' },
+          { hu: 'Jársz edzésre?', ru: 'Ты ходишь на тренировки?' },
+          { hu: 'Ő iskolába jár.', ru: 'Он ходит в школу.' },
+        ]
+      },
+      {
+        hu: 'utazik',
+        ru: 'путешествовать',
+        transcription: '[утозик]',
+        examples: [
+          { hu: 'Utazom Budapestre.', ru: 'Я еду в Будапешт.' },
+          { hu: 'Hova utazol?', ru: 'Куда ты едешь?' },
+          { hu: 'Ő sokat utazik.', ru: 'Он много путешествует.' },
+        ]
+      },
+      {
+        hu: 'dolgozik',
+        ru: 'работать',
+        transcription: '[долгозик]',
+        examples: [
+          { hu: 'Dolgozom.', ru: 'Я работаю.' },
+          { hu: 'Hol dolgozol?', ru: 'Где ты работаешь?' },
+          { hu: 'Ő otthon dolgozik.', ru: 'Он работает дома.' },
+        ]
+      },
+      {
+        hu: 'tanul',
+        ru: 'учиться',
+        transcription: '[тонул]',
+        examples: [
+          { hu: 'Magyarul tanulok.', ru: 'Я учу венгерский.' },
+          { hu: 'Mit tanulsz?', ru: 'Что ты учишь?' },
+          { hu: 'Ő sokat tanul.', ru: 'Он много учится.' },
+        ]
+      },
+      {
+        hu: 'olvas',
+        ru: 'читать',
+        transcription: '[олвош]',
+        examples: [
+          { hu: 'Könyvet olvasok.', ru: 'Я читаю книгу.' },
+          { hu: 'Mit olvasol?', ru: 'Что ты читаешь?' },
+          { hu: 'Ő minden nap olvas.', ru: 'Он читает каждый день.' },
+        ]
+      },
+      {
+        hu: 'ír',
+        ru: 'писать',
+        transcription: '[ир]',
+        examples: [
+          { hu: 'Levelet írok.', ru: 'Я пишу письмо.' },
+          { hu: 'Írsz nekem?', ru: 'Ты напишешь мне?' },
+          { hu: 'Ő szépen ír.', ru: 'Он красиво пишет.' },
+        ]
+      },
+      {
+        hu: 'néz',
+        ru: 'смотреть',
+        transcription: '[нэз]',
+        examples: [
+          { hu: 'Tévét nézek.', ru: 'Я смотрю телевизор.' },
+          { hu: 'Mit nézel?', ru: 'Что ты смотришь?' },
+          { hu: 'Nézd meg!', ru: 'Посмотри!' },
+        ]
+      },
+      {
+        hu: 'hallgat',
+        ru: 'слушать',
+        transcription: '[холлгот]',
+        examples: [
+          { hu: 'Zenét hallgatok.', ru: 'Я слушаю музыку.' },
+          { hu: 'Mit hallgatsz?', ru: 'Что ты слушаешь?' },
+          { hu: 'Hallgass rám!', ru: 'Слушай меня!' },
+        ]
+      },
+      {
+        hu: 'beszél',
+        ru: 'разговаривать',
+        transcription: '[бэсэл]',
+        examples: [
+          { hu: 'Magyarul beszélek.', ru: 'Я говорю по-венгерски.' },
+          { hu: 'Tudsz angolul beszélni?', ru: 'Ты можешь говорить по-английски?' },
+          { hu: 'Ő sokat beszél.', ru: 'Он много говорит.' },
+        ]
+      },
+      {
+        hu: 'nyit',
+        ru: 'открывать',
+        transcription: '[нит]',
+        examples: [
+          { hu: 'Nyisd ki az ajtót!', ru: 'Открой дверь!' },
+          { hu: 'Nyitok egy ablakot.', ru: 'Я открою окно.' },
+          { hu: 'Mikor nyit a bolt?', ru: 'Когда открывается магазин?' },
+        ]
+      },
+      {
+        hu: 'zár',
+        ru: 'закрывать',
+        transcription: '[зар]',
+        examples: [
+          { hu: 'Zárd be az ajtót!', ru: 'Закрой дверь!' },
+          { hu: 'Zárom az ablakot.', ru: 'Я закрываю окно.' },
+          { hu: 'Mikor zár a posta?', ru: 'Когда закрывается почта?' },
+        ]
+      },
+      {
+        hu: 'hoz',
+        ru: 'приносить',
+        transcription: '[хоз]',
+        examples: [
+          { hu: 'Hozok valamit.', ru: 'Я принесу кое-что.' },
+          { hu: 'Mit hozol?', ru: 'Что ты принесёшь?' },
+          { hu: 'Hozz vizet!', ru: 'Принеси воды!' },
+        ]
+      },
+      {
+        hu: 'visz',
+        ru: 'уносить, нести',
+        transcription: '[вис]',
+        examples: [
+          { hu: 'Viszem a táskát.', ru: 'Я несу сумку.' },
+          { hu: 'Mit viszel?', ru: 'Что ты несёшь?' },
+          { hu: 'Vidd el!', ru: 'Унеси это!' },
+        ]
+      },
+      {
+        hu: 'küld',
+        ru: 'отправлять',
+        transcription: '[кюльд]',
+        examples: [
+          { hu: 'Küldök egy üzenetet.', ru: 'Я отправлю сообщение.' },
+          { hu: 'Küldsz képet?', ru: 'Ты пришлёшь фото?' },
+          { hu: 'Küld el a levelet!', ru: 'Отправь письмо!' },
+        ]
+      },
+      {
+        hu: 'főz',
+        ru: 'готовить (еду)',
+        transcription: '[фёз]',
+        examples: [
+          { hu: 'Ebédet főzök.', ru: 'Я готовлю обед.' },
+          { hu: 'Mit főzöl?', ru: 'Что ты готовишь?' },
+          { hu: 'Ő nagyon jól főz.', ru: 'Он очень хорошо готовит.' },
+        ]
+      },
+      {
+        hu: 'vásárol',
+        ru: 'покупать',
+        transcription: '[вашарол]',
+        examples: [
+          { hu: 'A piacon vásárolok.', ru: 'Я покупаю на рынке.' },
+          { hu: 'Hol vásárolsz?', ru: 'Где ты покупаешь?' },
+          { hu: 'Ő sokat vásárol online.', ru: 'Он много покупает онлайн.' },
+        ]
+      },
+      {
+        hu: 'rendel',
+        ru: 'заказывать',
+        transcription: '[рэндэл]',
+        examples: [
+          { hu: 'Pizzát rendelek.', ru: 'Я заказываю пиццу.' },
+          { hu: 'Mit rendelsz?', ru: 'Что ты заказываешь?' },
+          { hu: 'Online rendelünk.', ru: 'Мы заказываем онлайн.' },
+        ]
+      },
+      {
+        hu: 'foglal',
+        ru: 'бронировать',
+        transcription: '[фоглол]',
+        examples: [
+          { hu: 'Szobát foglalok.', ru: 'Я бронирую номер.' },
+          { hu: 'Foglaltál helyet?', ru: 'Ты забронировал место?' },
+          { hu: 'Asztalt szeretnék foglalni.', ru: 'Я хотел бы забронировать столик.' },
+        ]
+      },
+      {
+        hu: 'hív',
+        ru: 'звонить',
+        transcription: '[хив]',
+        examples: [
+          { hu: 'Hívlak később.', ru: 'Я позвоню тебе позже.' },
+          { hu: 'Ki hívott?', ru: 'Кто звонил?' },
+          { hu: 'Hívj fel!', ru: 'Позвони мне!' },
+        ]
+      },
+      {
+        hu: 'találkozik',
+        ru: 'встречаться',
+        transcription: '[толалкозик]',
+        examples: [
+          { hu: 'Hat órakor találkozunk.', ru: 'Мы встречаемся в шесть.' },
+          { hu: 'Hol találkozunk?', ru: 'Где мы встретимся?' },
+          { hu: 'Találkoztam vele.', ru: 'Я встретился с ним.' },
+        ]
+      },
+      {
+        hu: 'indul',
+        ru: 'отправляться',
+        transcription: '[индул]',
+        examples: [
+          { hu: 'Indulok.', ru: 'Я отправляюсь.' },
+          { hu: 'Mikor indulsz?', ru: 'Когда ты отправляешься?' },
+          { hu: 'A vonat hamarosan indul.', ru: 'Поезд скоро отправляется.' },
+        ]
+      },
+      {
+        hu: 'érkezik',
+        ru: 'прибывать',
+        transcription: '[эркэзик]',
+        examples: [
+          { hu: 'Mikor érkezik a busz?', ru: 'Когда прибывает автобус?' },
+          { hu: 'Már megérkeztem.', ru: 'Я уже прибыл.' },
+          { hu: 'Ő holnap érkezik.', ru: 'Он прибывает завтра.' },
+        ]
+      },
+      {
+        hu: 'megáll',
+        ru: 'останавливаться',
+        transcription: '[мэгалл]',
+        examples: [
+          { hu: 'Megállok itt.', ru: 'Я останавливаюсь здесь.' },
+          { hu: 'Álljon meg!', ru: 'Остановитесь!' },
+          { hu: 'A busz megáll itt.', ru: 'Автобус останавливается здесь.' },
+        ]
+      },
+      {
+        hu: 'fordul',
+        ru: 'поворачивать',
+        transcription: '[фордул]',
+        examples: [
+          { hu: 'Fordulj jobbra!', ru: 'Поверни направо!' },
+          { hu: 'Az utca végén fordulj balra.', ru: 'На конце улицы поверни налево.' },
+          { hu: 'Fordulj meg!', ru: 'Повернись!' },
+        ]
+      },
+      {
+        hu: 'siet',
+        ru: 'спешить',
+        transcription: '[шиэт]',
+        examples: [
+          { hu: 'Sietek.', ru: 'Я спешу.' },
+          { hu: 'Ne siess!', ru: 'Не спеши!' },
+          { hu: 'Miért sietsz?', ru: 'Почему ты спешишь?' },
+        ]
+      },
+      {
+        hu: 'késik',
+        ru: 'опаздывать',
+        transcription: '[кэшик]',
+        examples: [
+          { hu: 'Késem.', ru: 'Я опаздываю.' },
+          { hu: 'Miért késel?', ru: 'Почему ты опаздываешь?' },
+          { hu: 'A vonat késik.', ru: 'Поезд опаздывает.' },
+        ]
+      },
+      {
+        hu: 'pihen',
+        ru: 'отдыхать',
+        transcription: '[пихэн]',
+        examples: [
+          { hu: 'Pihenek egy kicsit.', ru: 'Я отдохну немного.' },
+          { hu: 'Pihenj!', ru: 'Отдохни!' },
+          { hu: 'Hétvégén pihenünk.', ru: 'На выходных мы отдыхаем.' },
+        ]
+      },
+      {
+        hu: 'játszik',
+        ru: 'играть',
+        transcription: '[ятсик]',
+        examples: [
+          { hu: 'Mit játszol?', ru: 'Во что ты играешь?' },
+          { hu: 'Focizom.', ru: 'Я играю в футбол.' },
+          { hu: 'A gyerekek játszanak.', ru: 'Дети играют.' },
+        ]
+      },
+      {
+        hu: 'énekel',
+        ru: 'петь',
+        transcription: '[энэкэл]',
+        examples: [
+          { hu: 'Énekelek a zuhany alatt.', ru: 'Я пою в душе.' },
+          { hu: 'Tudsz énekelni?', ru: 'Ты умеешь петь?' },
+          { hu: 'Ő szépen énekel.', ru: 'Он красиво поёт.' },
+        ]
+      },
+      {
+        hu: 'táncol',
+        ru: 'танцевать',
+        transcription: '[танцол]',
+        examples: [
+          { hu: 'Szeretek táncolni.', ru: 'Я люблю танцевать.' },
+          { hu: 'Táncolsz velem?', ru: 'Ты потанцуешь со мной?' },
+          { hu: 'Ő jól táncol.', ru: 'Он хорошо танцует.' },
+        ]
+      },
+      {
+        hu: 'nevet',
+        ru: 'смеяться',
+        transcription: '[нэвэт]',
+        examples: [
+          { hu: 'Nevetek.', ru: 'Я смеюсь.' },
+          { hu: 'Min nevetsz?', ru: 'Над чем ты смеёшься?' },
+          { hu: 'Ne nevess!', ru: 'Не смейся!' },
+        ]
+      },
+      {
+        hu: 'fáj',
+        ru: 'болеть',
+        transcription: '[фай]',
+        examples: [
+          { hu: 'Fáj a fejem.', ru: 'У меня болит голова.' },
+          { hu: 'Hol fáj?', ru: 'Где болит?' },
+          { hu: 'Fáj a lábam.', ru: 'У меня болит нога.' },
+        ]
+      },
+      {
+        hu: 'érez',
+        ru: 'чувствовать',
+        transcription: '[эрэз]',
+        examples: [
+          { hu: 'Jól érzem magam.', ru: 'Я чувствую себя хорошо.' },
+          { hu: 'Mit érzel?', ru: 'Что ты чувствуешь?' },
+          { hu: 'Fáradtnak érzem magam.', ru: 'Я чувствую себя уставшим.' },
+        ]
+      },
+      {
+        hu: 'szeret',
+        ru: 'любить',
+        transcription: '[сэрэт]',
+        examples: [
+          { hu: 'Szeretlek.', ru: 'Я тебя люблю.' },
+          { hu: 'Szeretem a kávét.', ru: 'Я люблю кофе.' },
+          { hu: 'Ő szeret olvasni.', ru: 'Он любит читать.' },
+        ]
+      },
+      {
+        hu: 'fél',
+        ru: 'бояться',
+        transcription: '[фэл]',
+        examples: [
+          { hu: 'Félek.', ru: 'Я боюсь.' },
+          { hu: 'Mitől félsz?', ru: 'Чего ты боишься?' },
+          { hu: 'Ne félj!', ru: 'Не бойся!' },
+        ]
+      },
+      {
+        hu: 'örül',
+        ru: 'радоваться',
+        transcription: '[ёрюль]',
+        examples: [
+          { hu: 'Örülök!', ru: 'Я рад(а)!' },
+          { hu: 'Minek örülsz?', ru: 'Чему ты радуешься?' },
+          { hu: 'Örülök, hogy itt vagy.', ru: 'Я рад(а), что ты здесь.' },
+        ]
+      },
+      {
+        hu: 'gondol',
+        ru: 'думать',
+        transcription: '[гондол]',
+        examples: [
+          { hu: 'Mit gondolsz?', ru: 'Что ты думаешь?' },
+          { hu: 'Gondolok rád.', ru: 'Я думаю о тебе.' },
+          { hu: 'Gondolj bele!', ru: 'Подумай об этом!' },
+        ]
+      },
+      {
+        hu: 'emlékszik',
+        ru: 'помнить',
+        transcription: '[эмлэксик]',
+        examples: [
+          { hu: 'Emlékszem rád.', ru: 'Я помню тебя.' },
+          { hu: 'Emlékszel erre?', ru: 'Ты помнишь это?' },
+          { hu: 'Nem emlékszem.', ru: 'Я не помню.' },
+        ]
+      },
+      {
+        hu: 'felejt',
+        ru: 'забывать',
+        transcription: '[фэлэйт]',
+        examples: [
+          { hu: 'Ne felejtsd el!', ru: 'Не забудь!' },
+          { hu: 'Elfelejtette.', ru: 'Он/она забыл(а).' },
+          { hu: 'Mindent elfelejtek.', ru: 'Я всё забываю.' },
+        ]
+      },
+      {
+        hu: 'ismer',
+        ru: 'знать (человека)',
+        transcription: '[ишмэр]',
+        examples: [
+          { hu: 'Ismerem őt.', ru: 'Я знаю его/её.' },
+          { hu: 'Ismersz valakit?', ru: 'Ты кого-нибудь знаешь?' },
+          { hu: 'Nem ismerem.', ru: 'Я не знаю его/её.' },
+        ]
+      },
+      {
+        hu: 'magyaráz',
+        ru: 'объяснять',
+        transcription: '[мадьяраз]',
+        examples: [
+          { hu: 'Magyarázd meg!', ru: 'Объясни!' },
+          { hu: 'Mit magyarázol?', ru: 'Что ты объясняешь?' },
+          { hu: 'Megmagyarázom.', ru: 'Я объясню.' },
+        ]
+      },
+      {
+        hu: 'kérdez',
+        ru: 'спрашивать',
+        transcription: '[кэрдэз]',
+        examples: [
+          { hu: 'Kérdezek valamit.', ru: 'Я спрошу кое-что.' },
+          { hu: 'Miért kérdezel?', ru: 'Почему ты спрашиваешь?' },
+          { hu: 'Kérdezz bátran!', ru: 'Спрашивай смело!' },
+        ]
+      },
+      {
+        hu: 'válaszol',
+        ru: 'отвечать',
+        transcription: '[валосол]',
+        examples: [
+          { hu: 'Válaszolok.', ru: 'Я отвечаю.' },
+          { hu: 'Miért nem válaszolsz?', ru: 'Почему ты не отвечаешь?' },
+          { hu: 'Válaszolj a kérdésre!', ru: 'Ответь на вопрос!' },
+        ]
+      },
+      {
+        hu: 'köszön',
+        ru: 'благодарить, здороваться',
+        transcription: '[кёсён]',
+        examples: [
+          { hu: 'Köszönöm!', ru: 'Спасибо!' },
+          { hu: 'Köszönt mindenkit.', ru: 'Он поздоровался со всеми.' },
+          { hu: 'Hogyan köszönsz?', ru: 'Как ты здороваешься?' },
+        ]
+      },
+      {
+        hu: 'épít',
+        ru: 'строить',
+        transcription: '[эпит]',
+        examples: [
+          { hu: 'Házat épít.', ru: 'Он строит дом.' },
+          { hu: 'Mit építesz?', ru: 'Что ты строишь?' },
+          { hu: 'Új iskolát építenek.', ru: 'Они строят новую школу.' },
+        ]
+      },
+      {
+        hu: 'javít',
+        ru: 'ремонтировать',
+        transcription: '[явит]',
+        examples: [
+          { hu: 'Javítom az autót.', ru: 'Я ремонтирую машину.' },
+          { hu: 'Ki javítja meg?', ru: 'Кто это починит?' },
+          { hu: 'Javíts ki engem!', ru: 'Поправь меня!' },
+        ]
+      },
+      {
+        hu: 'tör',
+        ru: 'ломать',
+        transcription: '[тёр]',
+        examples: [
+          { hu: 'Eltörte a poharat.', ru: 'Он разбил стакан.' },
+          { hu: 'Vigyázz, ne törd el!', ru: 'Осторожно, не сломай!' },
+          { hu: 'Eltört.', ru: 'Сломалось/разбилось.' },
+        ]
+      },
+      {
+        hu: 'visel',
+        ru: 'носить (одежду)',
+        transcription: '[вишэл]',
+        examples: [
+          { hu: 'Kalapot visel.', ru: 'Он носит шляпу.' },
+          { hu: 'Mit viselsz?', ru: 'Что ты носишь?' },
+          { hu: 'Egyenruhát visel.', ru: 'Он носит форму.' },
+        ]
+      },
+      {
+        hu: 'dob',
+        ru: 'бросать',
+        transcription: '[доб]',
+        examples: [
+          { hu: 'Dobd ide!', ru: 'Брось сюда!' },
+          { hu: 'Dobj egy labdát!', ru: 'Брось мяч!' },
+          { hu: 'Ő messzire dob.', ru: 'Он бросает далеко.' },
+        ]
+      },
+      {
+        hu: 'fog',
+        ru: 'держать',
+        transcription: '[фог]',
+        examples: [
+          { hu: 'Fogd meg!', ru: 'Держи!' },
+          { hu: 'Fogom a kezét.', ru: 'Я держу его руку.' },
+          { hu: 'Ne engedd el, fogd!', ru: 'Не отпускай, держи!' },
+        ]
+      },
+      {
+        hu: 'emel',
+        ru: 'поднимать',
+        transcription: '[эмэл]',
+        examples: [
+          { hu: 'Emeld fel!', ru: 'Подними!' },
+          { hu: 'Emelem a táskát.', ru: 'Я поднимаю сумку.' },
+          { hu: 'Nehéz emelni.', ru: 'Тяжело поднимать.' },
+        ]
+      },
+      {
+        hu: 'tesz',
+        ru: 'класть, делать',
+        transcription: '[тэс]',
+        examples: [
+          { hu: 'Tedd le!', ru: 'Положи!' },
+          { hu: 'Hova tetted?', ru: 'Куда ты положил?' },
+          { hu: 'Teszek valamit.', ru: 'Я кое-что делаю.' },
+        ]
+      },
+      {
+        hu: 'mutat',
+        ru: 'показывать',
+        transcription: '[мутот]',
+        examples: [
+          { hu: 'Mutasd meg!', ru: 'Покажи!' },
+          { hu: 'Mit mutatsz?', ru: 'Что ты показываешь?' },
+          { hu: 'Megmutatom a térképet.', ru: 'Я покажу карту.' },
+        ]
+      },
+      {
+        hu: 'enged',
+        ru: 'разрешать',
+        transcription: '[энгэд]',
+        examples: [
+          { hu: 'Engeded?', ru: 'Ты разрешаешь?' },
+          { hu: 'Nem engedem.', ru: 'Я не разрешаю.' },
+          { hu: 'Engedd el!', ru: 'Отпусти!' },
+        ]
+      },
+      {
+        hu: 'próbál',
+        ru: 'пробовать',
+        transcription: '[пробал]',
+        examples: [
+          { hu: 'Próbálom.', ru: 'Я пробую.' },
+          { hu: 'Próbáld ki!', ru: 'Попробуй!' },
+          { hu: 'Megpróbálom.', ru: 'Я попробую.' },
+        ]
+      },
+      {
+        hu: 'sikerül',
+        ru: 'получаться',
+        transcription: '[шикэрюль]',
+        examples: [
+          { hu: 'Sikerült!', ru: 'Получилось!' },
+          { hu: 'Nem sikerül.', ru: 'Не получается.' },
+          { hu: 'Remélem, sikerül.', ru: 'Надеюсь, получится.' },
+        ]
+      },
+      {
+        hu: 'kezd',
+        ru: 'начинать',
+        transcription: '[кэзд]',
+        examples: [
+          { hu: 'Kezdjük!', ru: 'Начнём!' },
+          { hu: 'Mikor kezded?', ru: 'Когда ты начнёшь?' },
+          { hu: 'Kezdem a munkát.', ru: 'Я начинаю работу.' },
+        ]
+      },
+      {
+        hu: 'fejez',
+        ru: 'заканчивать',
+        transcription: '[фэйэз]',
+        examples: [
+          { hu: 'Befejezem.', ru: 'Я заканчиваю.' },
+          { hu: 'Mikor fejezed be?', ru: 'Когда ты закончишь?' },
+          { hu: 'Fejezd be!', ru: 'Заканчивай!' },
+        ]
+      },
+      {
+        hu: 'folytat',
+        ru: 'продолжать',
+        transcription: '[фойтот]',
+        examples: [
+          { hu: 'Folytasd!', ru: 'Продолжай!' },
+          { hu: 'Folytatom holnap.', ru: 'Я продолжу завтра.' },
+          { hu: 'Nem folytatjuk.', ru: 'Мы не продолжаем.' },
+        ]
+      },
+      {
+        hu: 'változik',
+        ru: 'меняться',
+        transcription: '[валтозик]',
+        examples: [
+          { hu: 'Minden változik.', ru: 'Всё меняется.' },
+          { hu: 'Az idő változik.', ru: 'Погода меняется.' },
+          { hu: 'Sokat változtál.', ru: 'Ты сильно изменился.' },
+        ]
+      },
+      {
+        hu: 'marad',
+        ru: 'оставаться',
+        transcription: '[мород]',
+        examples: [
+          { hu: 'Maradok.', ru: 'Я остаюсь.' },
+          { hu: 'Meddig maradsz?', ru: 'Как долго ты останешься?' },
+          { hu: 'Maradj itt!', ru: 'Оставайся здесь!' },
+        ]
+      },
+      {
+        hu: 'fut',
+        ru: 'бегать',
+        transcription: '[фут]',
+        examples: [
+          { hu: 'Futok minden reggel.', ru: 'Я бегаю каждое утро.' },
+          { hu: 'Fuss!', ru: 'Беги!' },
+          { hu: 'Gyorsan fut.', ru: 'Он быстро бегает.' },
+        ]
+      },
+      {
+        hu: 'ugrik',
+        ru: 'прыгать',
+        transcription: '[угрик]',
+        examples: [
+          { hu: 'Ugorj!', ru: 'Прыгай!' },
+          { hu: 'Magasra ugrik.', ru: 'Он прыгает высоко.' },
+          { hu: 'Ne ugorj!', ru: 'Не прыгай!' },
+        ]
+      },
+      {
+        hu: 'úszik',
+        ru: 'плавать',
+        transcription: '[усик]',
+        examples: [
+          { hu: 'Úszom a tóban.', ru: 'Я плаваю в озере.' },
+          { hu: 'Tudsz úszni?', ru: 'Ты умеешь плавать?' },
+          { hu: 'Ő jól úszik.', ru: 'Он хорошо плавает.' },
+        ]
+      },
+      {
+        hu: 'vezet',
+        ru: 'вести, управлять',
+        transcription: '[вэзэт]',
+        examples: [
+          { hu: 'Vezetek.', ru: 'Я веду (машину).' },
+          { hu: 'Tudsz vezetni?', ru: 'Ты умеешь водить?' },
+          { hu: 'Ő gyorsan vezet.', ru: 'Он быстро едет.' },
+        ]
+      },
+      {
+        hu: 'rajzol',
+        ru: 'рисовать',
+        transcription: '[райзол]',
+        examples: [
+          { hu: 'Rajzolok egy képet.', ru: 'Я рисую картинку.' },
+          { hu: 'Rajzolj nekem!', ru: 'Нарисуй мне!' },
+          { hu: 'Ő szépen rajzol.', ru: 'Он красиво рисует.' },
+        ]
+      },
+      {
+        hu: 'fest',
+        ru: 'красить, рисовать (красками)',
+        transcription: '[фэшт]',
+        examples: [
+          { hu: 'Festem a falat.', ru: 'Я крашу стену.' },
+          { hu: 'Mit festesz?', ru: 'Что ты рисуешь?' },
+          { hu: 'Ő olajképet fest.', ru: 'Он рисует маслом.' },
+        ]
+      },
+      {
+        hu: 'takarít',
+        ru: 'убирать',
+        transcription: '[токорит]',
+        examples: [
+          { hu: 'Takarítok.', ru: 'Я убираю.' },
+          { hu: 'Mikor takarítasz?', ru: 'Когда ты убираешь?' },
+          { hu: 'Takarítsuk ki a szobát!', ru: 'Уберём комнату!' },
+        ]
+      },
+      {
+        hu: 'rak',
+        ru: 'складывать, класть',
+        transcription: '[рок]',
+        examples: [
+          { hu: 'Rakd el!', ru: 'Убери/сложи!' },
+          { hu: 'Hova rakod?', ru: 'Куда ты кладёшь?' },
+          { hu: 'Berakom a táskába.', ru: 'Я кладу в сумку.' },
+        ]
+      },
+      {
+        hu: 'köt',
+        ru: 'завязывать, вязать',
+        transcription: '[кёт]',
+        examples: [
+          { hu: 'Kösd meg!', ru: 'Завяжи!' },
+          { hu: 'Köti a cipőfűzőt.', ru: 'Он завязывает шнурок.' },
+          { hu: 'Nem tudok kötni.', ru: 'Я не умею вязать.' },
+        ]
+      },
+      {
+        hu: 'vág',
+        ru: 'резать',
+        transcription: '[ваг]',
+        examples: [
+          { hu: 'Vágd fel!', ru: 'Нарежь!' },
+          { hu: 'Vágom a kenyeret.', ru: 'Я режу хлеб.' },
+          { hu: 'Óvatosan vágj!', ru: 'Режь осторожно!' },
+        ]
+      },
+      {
+        hu: 'mos',
+        ru: 'мыть',
+        transcription: '[мош]',
+        examples: [
+          { hu: 'Mosok.', ru: 'Я мою.' },
+          { hu: 'Mosd meg a kezed!', ru: 'Вымой руки!' },
+          { hu: 'Mosógéppel mosok.', ru: 'Я стираю в машинке.' },
+        ]
+      },
+      {
+        hu: 'tölt',
+        ru: 'наполнять',
+        transcription: '[тёльт]',
+        examples: [
+          { hu: 'Töltsd meg!', ru: 'Наполни!' },
+          { hu: 'Töltöm a poharat.', ru: 'Я наполняю стакан.' },
+          { hu: 'Töltsd fel a telefont!', ru: 'Зарядь телефон!' },
+        ]
+      },
+      {
+        hu: 'zavar',
+        ru: 'мешать, беспокоить',
+        transcription: '[зовор]',
+        examples: [
+          { hu: 'Ne zavarj!', ru: 'Не мешай!' },
+          { hu: 'Zavarlak?', ru: 'Я тебе мешаю?' },
+          { hu: 'Zavar a zaj.', ru: 'Шум мешает.' },
+        ]
+      },
+      {
+        hu: 'kínál',
+        ru: 'предлагать',
+        transcription: '[кинал]',
+        examples: [
+          { hu: 'Kínálom egy kávéval.', ru: 'Я угощаю его кофе.' },
+          { hu: 'Mit kínálsz?', ru: 'Что ты предлагаешь?' },
+          { hu: 'Kínálj meg!', ru: 'Угости меня!' },
+        ]
+      },
+      {
+        hu: 'választ',
+        ru: 'выбирать',
+        transcription: '[валост]',
+        examples: [
+          { hu: 'Válassz egyet!', ru: 'Выбери одно!' },
+          { hu: 'Mit választasz?', ru: 'Что ты выбираешь?' },
+          { hu: 'Nehéz választani.', ru: 'Трудно выбирать.' },
+        ]
+      },
+    ];
+
+    /* ── Render verb list ── */
+    const verbsList = document.getElementById('verbs-list');
+
+    function renderVerbs(list) {
+      verbsList.innerHTML = '';
+      if (list.length === 0) {
+        verbsList.innerHTML = '<p class="no-results">Ничего не найдено</p>';
+        return;
+      }
+      list.forEach((verb, idx) => {
+        const card = document.createElement('div');
+        card.className = 'verb-card';
+        card.dataset.idx = idx;
+        card.innerHTML = `
+          <div class="verb-card-left">
+            <span class="verb-hu">${verb.hu}</span>
+            <span class="verb-ru">${verb.ru}</span>
+          </div>
+          <span class="verb-arrow">›</span>
+        `;
+        card.addEventListener('click', () => openModal(verb));
+        verbsList.appendChild(card);
+      });
+    }
+
+    renderVerbs(verbs);
+
+    /* ── Search ── */
+    document.getElementById('verb-search').addEventListener('input', e => {
+      const q = e.target.value.trim().toLowerCase();
+      const filtered = q
+        ? verbs.filter(v => v.hu.toLowerCase().includes(q) || v.ru.toLowerCase().includes(q))
+        : verbs;
+      renderVerbs(filtered);
+    });
+
+    /* ── Noun data ── */
+    const nouns = [
+      // ЛЮДИ
+      { topic:'people', hu:'ember',    ru:'человек',      transcription:'[эмбэр]',   examples:[{hu:'Sok ember van itt.',ru:'Здесь много людей.'},{hu:'Az emberek sétálnak.',ru:'Люди гуляют.'},{hu:'Jó ember.',ru:'Хороший человек.'}] },
+      { topic:'people', hu:'férfi',    ru:'мужчина',      transcription:'[фэрфи]',   examples:[{hu:'Ez a férfi tanár.',ru:'Этот мужчина — учитель.'},{hu:'Egy férfi vár.',ru:'Ждёт мужчина.'},{hu:'Fiatal férfi.',ru:'Молодой мужчина.'}] },
+      { topic:'people', hu:'nő',       ru:'женщина',      transcription:'[нё]',      examples:[{hu:'A nő mosolyog.',ru:'Женщина улыбается.'},{hu:'Ez a nő orvos.',ru:'Эта женщина — врач.'},{hu:'Szép nő.',ru:'Красивая женщина.'}] },
+      { topic:'people', hu:'gyerek',   ru:'ребёнок',      transcription:'[дьэрэк]',  examples:[{hu:'A gyerek játszik.',ru:'Ребёнок играет.'},{hu:'Hány gyereked van?',ru:'Сколько у тебя детей?'},{hu:'A gyerekek nevetnek.',ru:'Дети смеются.'}] },
+      { topic:'people', hu:'fiú',      ru:'мальчик, сын', transcription:'[фиу]',     examples:[{hu:'A fiú focizik.',ru:'Мальчик играет в футбол.'},{hu:'Ez az én fiam.',ru:'Это мой сын.'},{hu:'Kis fiú.',ru:'Маленький мальчик.'}] },
+      { topic:'people', hu:'lány',     ru:'девочка, дочь',transcription:'[лань]',    examples:[{hu:'A lány táncol.',ru:'Девочка танцует.'},{hu:'Ez az én lányom.',ru:'Это моя дочь.'},{hu:'Szép lány.',ru:'Красивая девушка.'}] },
+      { topic:'people', hu:'apa',      ru:'папа',         transcription:'[опо]',     examples:[{hu:'Az apám mérnök.',ru:'Мой папа — инженер.'},{hu:'Hol az apád?',ru:'Где твой папа?'},{hu:'Apa, segíts!',ru:'Папа, помоги!'}] },
+      { topic:'people', hu:'anya',     ru:'мама',         transcription:'[оньо]',    examples:[{hu:'Az anyám főz.',ru:'Моя мама готовит.'},{hu:'Hívom az anyámat.',ru:'Я звоню маме.'},{hu:'Anya, gyere!',ru:'Мама, иди сюда!'}] },
+      { topic:'people', hu:'férj',     ru:'муж',          transcription:'[фэрй]',    examples:[{hu:'A férjem dolgozik.',ru:'Мой муж работает.'},{hu:'Van férjed?',ru:'У тебя есть муж?'},{hu:'Ő a férjem.',ru:'Это мой муж.'}] },
+      { topic:'people', hu:'feleség',  ru:'жена',         transcription:'[фэлэшэг]', examples:[{hu:'A feleségem orvos.',ru:'Моя жена — врач.'},{hu:'Van feleséged?',ru:'У тебя есть жена?'},{hu:'Ő a feleségem.',ru:'Это моя жена.'}] },
+      { topic:'people', hu:'barát',    ru:'друг',         transcription:'[борат]',   examples:[{hu:'A barátom jön.',ru:'Мой друг идёт.'},{hu:'Hol a barátod?',ru:'Где твой друг?'},{hu:'Jó barát.',ru:'Хороший друг.'}] },
+      { topic:'people', hu:'kolléga',  ru:'коллега',      transcription:'[коллэго]', examples:[{hu:'A kollégám segít.',ru:'Мой коллега помогает.'},{hu:'Ő a kollégám.',ru:'Он мой коллега.'},{hu:'Jó kollégák.',ru:'Хорошие коллеги.'}] },
+      { topic:'people', hu:'szomszéd', ru:'сосед',        transcription:'[сомсэд]',  examples:[{hu:'A szomszédom zajos.',ru:'Мой сосед шумный.'},{hu:'Köszönök a szomszédnak.',ru:'Здороваюсь с соседом.'},{hu:'Jó szomszéd.',ru:'Хороший сосед.'}] },
+      { topic:'people', hu:'orvos',    ru:'врач',         transcription:'[орвош]',   examples:[{hu:'Az orvos vizsgál.',ru:'Врач осматривает.'},{hu:'Kell az orvos.',ru:'Нужен врач.'},{hu:'Jó orvos.',ru:'Хороший врач.'}] },
+      { topic:'people', hu:'tanár',    ru:'учитель',      transcription:'[тонар]',   examples:[{hu:'A tanár magyaráz.',ru:'Учитель объясняет.'},{hu:'Ő a tanárom.',ru:'Он мой учитель.'},{hu:'Jó tanár.',ru:'Хороший учитель.'}] },
+      { topic:'people', hu:'főnök',    ru:'начальник',    transcription:'[фёнёк]',   examples:[{hu:'A főnök vár.',ru:'Начальник ждёт.'},{hu:'Ő a főnököm.',ru:'Он мой начальник.'},{hu:'A főnök utazik.',ru:'Начальник в командировке.'}] },
+      { topic:'people', hu:'rendőr',   ru:'полицейский',  transcription:'[рэндёр]',  examples:[{hu:'A rendőr segít.',ru:'Полицейский помогает.'},{hu:'Hívjunk rendőrt!',ru:'Вызовем полицию!'},{hu:'A rendőr int.',ru:'Полицейский машет рукой.'}] },
+      { topic:'people', hu:'eladó',    ru:'продавец',     transcription:'[элодо]',   examples:[{hu:'Az eladó segít.',ru:'Продавец помогает.'},{hu:'Hol az eladó?',ru:'Где продавец?'},{hu:'Az eladó mosolyog.',ru:'Продавец улыбается.'}] },
+      { topic:'people', hu:'pincér',   ru:'официант',     transcription:'[пинцэр]',  examples:[{hu:'A pincér jön.',ru:'Официант идёт.'},{hu:'Kérem a pincért.',ru:'Позовите официанта.'},{hu:'A pincér hoz valamit.',ru:'Официант приносит что-то.'}] },
+      { topic:'people', hu:'sofőr',    ru:'водитель',     transcription:'[шофёр]',   examples:[{hu:'A sofőr vár.',ru:'Водитель ждёт.'},{hu:'Ő a sofőröm.',ru:'Он мой водитель.'},{hu:'A sofőr gyorsan vezet.',ru:'Водитель быстро едет.'}] },
+      // ТЕЛО И ЗДОРОВЬЕ
+      { topic:'body', hu:'fej',       ru:'голова',    transcription:'[фэй]',      examples:[{hu:'Fáj a fejem.',ru:'У меня болит голова.'},{hu:'Mosd meg a fejed!',ru:'Вымой голову!'},{hu:'Nagy fej.',ru:'Большая голова.'}] },
+      { topic:'body', hu:'kéz',       ru:'рука',      transcription:'[кэз]',      examples:[{hu:'Mosd meg a kezed!',ru:'Вымой руки!'},{hu:'A kezem fáj.',ru:'У меня болит рука.'},{hu:'Nyújtsd ki a kezed!',ru:'Протяни руку!'}] },
+      { topic:'body', hu:'láb',       ru:'нога',      transcription:'[лаб]',      examples:[{hu:'Fáj a lábam.',ru:'У меня болит нога.'},{hu:'A lábam elfáradt.',ru:'Моя нога устала.'},{hu:'Emeld fel a lábad!',ru:'Подними ногу!'}] },
+      { topic:'body', hu:'szem',      ru:'глаз',      transcription:'[сэм]',      examples:[{hu:'Csukd be a szemed!',ru:'Закрой глаза!'},{hu:'A szemem fáj.',ru:'У меня болит глаз.'},{hu:'Kék szem.',ru:'Голубые глаза.'}] },
+      { topic:'body', hu:'fül',       ru:'ухо',       transcription:'[фюль]',     examples:[{hu:'Fáj a fülem.',ru:'У меня болит ухо.'},{hu:'A fülem zúg.',ru:'У меня звенит в ухе.'},{hu:'Nagy fül.',ru:'Большое ухо.'}] },
+      { topic:'body', hu:'száj',      ru:'рот',       transcription:'[сай]',      examples:[{hu:'Nyisd ki a szád!',ru:'Открой рот!'},{hu:'Tedd be a szád!',ru:'Закрой рот!'},{hu:'A szám fáj.',ru:'У меня болит рот.'}] },
+      { topic:'body', hu:'has',       ru:'живот',     transcription:'[хош]',      examples:[{hu:'Fáj a hasam.',ru:'У меня болит живот.'},{hu:'Éhes a hasam.',ru:'Живот голодный.'},{hu:'A hasam tele van.',ru:'Живот полный.'}] },
+      { topic:'body', hu:'hát',       ru:'спина',     transcription:'[хат]',      examples:[{hu:'Fáj a hátam.',ru:'У меня болит спина.'},{hu:'A hátam fáradt.',ru:'Спина устала.'},{hu:'Egyenes hát.',ru:'Прямая спина.'}] },
+      { topic:'body', hu:'fog',       ru:'зуб',       transcription:'[фог]',      examples:[{hu:'Fáj a fogam.',ru:'У меня болит зуб.'},{hu:'Mosd meg a fogad!',ru:'Почисти зубы!'},{hu:'Fogat mosok.',ru:'Я чищу зубы.'}] },
+      { topic:'body', hu:'szív',      ru:'сердце',    transcription:'[сив]',      examples:[{hu:'Fáj a szívem.',ru:'У меня болит сердце.'},{hu:'Egészséges szív.',ru:'Здоровое сердце.'},{hu:'A szívem dobog.',ru:'Моё сердце бьётся.'}] },
+      { topic:'body', hu:'gyógyszer', ru:'лекарство', transcription:'[дьёдьсэр]', examples:[{hu:'Gyógyszert szedek.',ru:'Я принимаю лекарство.'},{hu:'Van gyógyszer?',ru:'Есть лекарство?'},{hu:'Kell gyógyszer.',ru:'Нужно лекарство.'}] },
+      { topic:'body', hu:'kórház',    ru:'больница',  transcription:'[корхаз]',   examples:[{hu:'A kórházban vagyok.',ru:'Я в больнице.'},{hu:'Menjünk kórházba!',ru:'Пойдём в больницу!'},{hu:'Közel van a kórház.',ru:'Больница близко.'}] },
+      { topic:'body', hu:'recept',    ru:'рецепт',    transcription:'[рэцэпт]',   examples:[{hu:'Van recepted?',ru:'У тебя есть рецепт?'},{hu:'Kell egy recept.',ru:'Нужен рецепт.'},{hu:'Az orvos receptet ír.',ru:'Врач выписывает рецепт.'}] },
+      { topic:'body', hu:'fájdalom',  ru:'боль',      transcription:'[файдолом]', examples:[{hu:'Nagy a fájdalom.',ru:'Боль сильная.'},{hu:'Érzem a fájdalmat.',ru:'Я чувствую боль.'},{hu:'Csillapítom a fájdalmat.',ru:'Я облегчаю боль.'}] },
+      { topic:'body', hu:'betegség',  ru:'болезнь',   transcription:'[бэтэгшэг]', examples:[{hu:'Súlyos betegség.',ru:'Серьёзная болезнь.'},{hu:'Mi a betegség?',ru:'Что за болезнь?'},{hu:'Gyógyítom a betegséget.',ru:'Я лечу болезнь.'}] },
+      // ЕДА И НАПИТКИ
+      { topic:'food', hu:'kenyér',   ru:'хлеб',     transcription:'[кэньэр]',   examples:[{hu:'Kenyeret veszek.',ru:'Я покупаю хлеб.'},{hu:'Kérek egy kenyeret.',ru:'Дайте хлеб, пожалуйста.'},{hu:'Friss kenyér.',ru:'Свежий хлеб.'}] },
+      { topic:'food', hu:'víz',      ru:'вода',     transcription:'[виз]',      examples:[{hu:'Kérek egy pohár vizet.',ru:'Мне стакан воды.'},{hu:'A víz hideg.',ru:'Вода холодная.'},{hu:'Iszom egy kis vizet.',ru:'Я пью немного воды.'}] },
+      { topic:'food', hu:'tej',      ru:'молоко',   transcription:'[тэй]',      examples:[{hu:'Kérek egy pohár tejet.',ru:'Мне стакан молока.'},{hu:'A tej friss.',ru:'Молоко свежее.'},{hu:'Tejes kávé.',ru:'Кофе с молоком.'}] },
+      { topic:'food', hu:'kávé',     ru:'кофе',     transcription:'[кавэ]',     examples:[{hu:'Kérek egy kávét.',ru:'Мне кофе, пожалуйста.'},{hu:'Erős kávé.',ru:'Крепкий кофе.'},{hu:'Reggel kávét iszom.',ru:'Утром я пью кофе.'}] },
+      { topic:'food', hu:'tea',      ru:'чай',      transcription:'[тэо]',      examples:[{hu:'Kérek egy teát.',ru:'Мне чай, пожалуйста.'},{hu:'Forró tea.',ru:'Горячий чай.'},{hu:'Zöld tea.',ru:'Зелёный чай.'}] },
+      { topic:'food', hu:'hús',      ru:'мясо',     transcription:'[хуш]',      examples:[{hu:'Húst eszem.',ru:'Я ем мясо.'},{hu:'Friss hús.',ru:'Свежее мясо.'},{hu:'Nem eszem húst.',ru:'Я не ем мясо.'}] },
+      { topic:'food', hu:'hal',      ru:'рыба',     transcription:'[хол]',      examples:[{hu:'Halat eszem.',ru:'Я ем рыбу.'},{hu:'Friss hal.',ru:'Свежая рыба.'},{hu:'Sült hal.',ru:'Жареная рыба.'}] },
+      { topic:'food', hu:'tojás',    ru:'яйцо',     transcription:'[тояш]',     examples:[{hu:'Tojást eszek.',ru:'Я ем яйцо.'},{hu:'Két tojás kell.',ru:'Нужно два яйца.'},{hu:'Főtt tojás.',ru:'Варёное яйцо.'}] },
+      { topic:'food', hu:'sajt',     ru:'сыр',      transcription:'[шайт]',     examples:[{hu:'Sajtot eszek.',ru:'Я ем сыр.'},{hu:'Finom sajt.',ru:'Вкусный сыр.'},{hu:'Kenyérrel és sajttal.',ru:'С хлебом и сыром.'}] },
+      { topic:'food', hu:'zöldség',  ru:'овощи',    transcription:'[зёльдшэг]', examples:[{hu:'Zöldséget eszem.',ru:'Я ем овощи.'},{hu:'Friss zöldség.',ru:'Свежие овощи.'},{hu:'Sok zöldséget egyél!',ru:'Ешь больше овощей!'}] },
+      { topic:'food', hu:'gyümölcs', ru:'фрукты',   transcription:'[дьюмёльч]', examples:[{hu:'Gyümölcsöt eszem.',ru:'Я ем фрукты.'},{hu:'Friss gyümölcs.',ru:'Свежие фрукты.'},{hu:'Milyen gyümölcsöt szeretsz?',ru:'Какие фрукты ты любишь?'}] },
+      { topic:'food', hu:'leves',    ru:'суп',      transcription:'[лэвэш]',    examples:[{hu:'Levest eszem.',ru:'Я ем суп.'},{hu:'Meleg leves.',ru:'Тёплый суп.'},{hu:'Kérek egy tányér levest.',ru:'Дайте тарелку супа.'}] },
+      { topic:'food', hu:'étel',     ru:'еда, блюдо',transcription:'[этэл]',    examples:[{hu:'Mi az étel?',ru:'Что это за блюдо?'},{hu:'Finom étel.',ru:'Вкусная еда.'},{hu:'Magyar étel.',ru:'Венгерская еда.'}] },
+      { topic:'food', hu:'ital',     ru:'напиток',  transcription:'[итол]',     examples:[{hu:'Mit kérsz italnak?',ru:'Что ты хочешь выпить?'},{hu:'Hideg ital.',ru:'Холодный напиток.'},{hu:'Kérek egy italt.',ru:'Дайте мне напиток.'}] },
+      { topic:'food', hu:'bor',      ru:'вино',     transcription:'[бор]',      examples:[{hu:'Kérek egy pohár bort.',ru:'Мне бокал вина.'},{hu:'Magyar bor.',ru:'Венгерское вино.'},{hu:'Vörös bor.',ru:'Красное вино.'}] },
+      { topic:'food', hu:'sör',      ru:'пиво',     transcription:'[шёр]',      examples:[{hu:'Kérek egy sört.',ru:'Мне пива, пожалуйста.'},{hu:'Hideg sör.',ru:'Холодное пиво.'},{hu:'Magyar sör.',ru:'Венгерское пиво.'}] },
+      { topic:'food', hu:'cukor',    ru:'сахар',    transcription:'[цукор]',    examples:[{hu:'Cukrot teszek a kávéba.',ru:'Я кладу сахар в кофе.'},{hu:'Kérsz cukrot?',ru:'Хочешь сахар?'},{hu:'Kevés cukor.',ru:'Немного сахара.'}] },
+      { topic:'food', hu:'só',       ru:'соль',     transcription:'[шо]',       examples:[{hu:'Kérem a sót.',ru:'Передайте соль.'},{hu:'Sós étel.',ru:'Солёная еда.'},{hu:'Adj sót!',ru:'Дай соль!'}] },
+      { topic:'food', hu:'olaj',     ru:'масло',    transcription:'[олой]',     examples:[{hu:'Olajjal főzök.',ru:'Я готовлю на масле.'},{hu:'Olívaolaj.',ru:'Оливковое масло.'},{hu:'Kevés olaj kell.',ru:'Нужно немного масла.'}] },
+      { topic:'food', hu:'számla',   ru:'счёт',     transcription:'[самло]',    examples:[{hu:'Kérem a számlát.',ru:'Счёт, пожалуйста.'},{hu:'Fizetek a számlát.',ru:'Я оплачиваю счёт.'},{hu:'Mennyi a számla?',ru:'Сколько стоит счёт?'}] },
+      // ДОМ И БЫТ
+      { topic:'home', hu:'ház',         ru:'дом',         transcription:'[хаз]',      examples:[{hu:'Nagy ház.',ru:'Большой дом.'},{hu:'Ez a mi házunk.',ru:'Это наш дом.'},{hu:'Megveszem a házat.',ru:'Я куплю дом.'}] },
+      { topic:'home', hu:'lakás',       ru:'квартира',     transcription:'[локаш]',    examples:[{hu:'Kis lakás.',ru:'Маленькая квартира.'},{hu:'Bérelek egy lakást.',ru:'Я арендую квартиру.'},{hu:'Hol a lakásod?',ru:'Где твоя квартира?'}] },
+      { topic:'home', hu:'szoba',       ru:'комната',      transcription:'[собо]',     examples:[{hu:'Nagy szoba.',ru:'Большая комната.'},{hu:'Hány szobás a lakás?',ru:'Сколько комнат в квартире?'},{hu:'A szobám rendezett.',ru:'Моя комната убрана.'}] },
+      { topic:'home', hu:'konyha',      ru:'кухня',        transcription:'[конья]',    examples:[{hu:'A konyhában főzök.',ru:'Я готовлю на кухне.'},{hu:'Nagy konyha.',ru:'Большая кухня.'},{hu:'A konyha tiszta.',ru:'Кухня чистая.'}] },
+      { topic:'home', hu:'fürdőszoba',  ru:'ванная',       transcription:'[фюрдёсобо]',examples:[{hu:'A fürdőszobában vagyok.',ru:'Я в ванной.'},{hu:'Nagy fürdőszoba.',ru:'Большая ванная.'},{hu:'Takarítom a fürdőszobát.',ru:'Я убираю ванную.'}] },
+      { topic:'home', hu:'ajtó',        ru:'дверь',        transcription:'[ойто]',     examples:[{hu:'Nyisd ki az ajtót!',ru:'Открой дверь!'},{hu:'Az ajtó nyitva van.',ru:'Дверь открыта.'},{hu:'Zárd be az ajtót!',ru:'Закрой дверь!'}] },
+      { topic:'home', hu:'ablak',       ru:'окно',         transcription:'[облок]',    examples:[{hu:'Nyisd ki az ablakot!',ru:'Открой окно!'},{hu:'Az ablak nyitva van.',ru:'Окно открыто.'},{hu:'Nagy ablak.',ru:'Большое окно.'}] },
+      { topic:'home', hu:'ágy',         ru:'кровать',      transcription:'[адь]',      examples:[{hu:'Az ágyban alszom.',ru:'Я сплю в кровати.'},{hu:'Nagy ágy.',ru:'Большая кровать.'},{hu:'Az ágy puha.',ru:'Кровать мягкая.'}] },
+      { topic:'home', hu:'asztal',      ru:'стол',         transcription:'[остол]',    examples:[{hu:'Az asztalnál ülök.',ru:'Я сижу за столом.'},{hu:'Nagy asztal.',ru:'Большой стол.'},{hu:'Tedd az asztalra!',ru:'Положи на стол!'}] },
+      { topic:'home', hu:'szék',        ru:'стул',         transcription:'[сэк]',      examples:[{hu:'Ülj le a székre!',ru:'Садись на стул!'},{hu:'Kényelmes szék.',ru:'Удобный стул.'},{hu:'Hozz egy széket!',ru:'Принеси стул!'}] },
+      { topic:'home', hu:'kulcs',       ru:'ключ',         transcription:'[кульч]',    examples:[{hu:'Hol a kulcsom?',ru:'Где мой ключ?'},{hu:'Elveszítettem a kulcsomat.',ru:'Я потерял ключ.'},{hu:'Add ide a kulcsot!',ru:'Дай ключ!'}] },
+      { topic:'home', hu:'lámpa',       ru:'лампа',        transcription:'[лампо]',    examples:[{hu:'Kapcsold fel a lámpát!',ru:'Включи лампу!'},{hu:'A lámpa ég.',ru:'Лампа горит.'},{hu:'Szép lámpa.',ru:'Красивая лампа.'}] },
+      { topic:'home', hu:'telefon',     ru:'телефон',      transcription:'[тэлэфон]',  examples:[{hu:'A telefonom lemerült.',ru:'Мой телефон разрядился.'},{hu:'Hol a telefonom?',ru:'Где мой телефон?'},{hu:'Hívom telefonon.',ru:'Я звоню по телефону.'}] },
+      { topic:'home', hu:'számítógép',  ru:'компьютер',    transcription:'[самиточэп]', examples:[{hu:'A számítógépen dolgozom.',ru:'Я работаю на компьютере.'},{hu:'Lassú a számítógépem.',ru:'Мой компьютер медленный.'},{hu:'Új számítógép.',ru:'Новый компьютер.'}] },
+      { topic:'home', hu:'pénz',        ru:'деньги',       transcription:'[пэнз]',     examples:[{hu:'Van pénzed?',ru:'У тебя есть деньги?'},{hu:'Nincs pénzem.',ru:'У меня нет денег.'},{hu:'Sok pénz.',ru:'Много денег.'}] },
+      { topic:'home', hu:'táska',       ru:'сумка',        transcription:'[ташко]',    examples:[{hu:'Hol a táskám?',ru:'Где моя сумка?'},{hu:'Nagy táska.',ru:'Большая сумка.'},{hu:'Elveszítettem a táskámat.',ru:'Я потерял сумку.'}] },
+      { topic:'home', hu:'ruha',        ru:'одежда',       transcription:'[руха]',     examples:[{hu:'Szép ruha.',ru:'Красивая одежда.'},{hu:'Új ruhát veszek.',ru:'Я покупаю новую одежду.'},{hu:'Ez a ruhám.',ru:'Это моя одежда.'}] },
+      { topic:'home', hu:'cipő',        ru:'обувь',        transcription:'[ципё]',     examples:[{hu:'Új cipőt veszek.',ru:'Я покупаю новую обувь.'},{hu:'Szép cipő.',ru:'Красивая обувь.'},{hu:'Vedd fel a cipődet!',ru:'Надень обувь!'}] },
+      { topic:'home', hu:'könyv',       ru:'книга',        transcription:'[кёньв]',    examples:[{hu:'Könyvet olvasok.',ru:'Я читаю книгу.'},{hu:'Érdekes könyv.',ru:'Интересная книга.'},{hu:'Adj egy könyvet!',ru:'Дай книгу!'}] },
+      { topic:'home', hu:'újság',       ru:'газета',       transcription:'[уйшаг]',    examples:[{hu:'Újságot olvasok.',ru:'Я читаю газету.'},{hu:'Mai újság.',ru:'Сегодняшняя газета.'},{hu:'Magyar újság.',ru:'Венгерская газета.'}] },
+      // ГОРОД И ТРАНСПОРТ
+      { topic:'city', hu:'város',    ru:'город',        transcription:'[варош]',    examples:[{hu:'Nagy város.',ru:'Большой город.'},{hu:'Melyik városból jössz?',ru:'Из какого города ты?'},{hu:'Szeretem ezt a várost.',ru:'Я люблю этот город.'}] },
+      { topic:'city', hu:'utca',     ru:'улица',        transcription:'[утцо]',     examples:[{hu:'Melyik utcában laksz?',ru:'На какой улице ты живёшь?'},{hu:'A főutcán megyek.',ru:'Я иду по главной улице.'},{hu:'Szép utca.',ru:'Красивая улица.'}] },
+      { topic:'city', hu:'út',       ru:'дорога',       transcription:'[ут]',       examples:[{hu:'Hosszú út.',ru:'Длинная дорога.'},{hu:'Jó utat!',ru:'Счастливого пути!'},{hu:'Ez az út vezet oda.',ru:'Эта дорога ведёт туда.'}] },
+      { topic:'city', hu:'híd',      ru:'мост',         transcription:'[хид]',      examples:[{hu:'A hídon megyek át.',ru:'Я перехожу по мосту.'},{hu:'Szép híd.',ru:'Красивый мост.'},{hu:'A Lánchíd ismert.',ru:'Цепной мост известен.'}] },
+      { topic:'city', hu:'park',     ru:'парк',         transcription:'[порк]',     examples:[{hu:'A parkban sétálok.',ru:'Я гуляю в парке.'},{hu:'Szép park.',ru:'Красивый парк.'},{hu:'Menjünk a parkba!',ru:'Пойдём в парк!'}] },
+      { topic:'city', hu:'bolt',     ru:'магазин',      transcription:'[болт]',     examples:[{hu:'A boltban vásárolok.',ru:'Я покупаю в магазине.'},{hu:'Mikor nyit a bolt?',ru:'Когда открывается магазин?'},{hu:'Elmegyek a boltba.',ru:'Я иду в магазин.'}] },
+      { topic:'city', hu:'bank',     ru:'банк',         transcription:'[банк]',     examples:[{hu:'A bankba megyek.',ru:'Я иду в банк.'},{hu:'Pénzt veszek ki a bankból.',ru:'Я снимаю деньги из банка.'},{hu:'Hol van a bank?',ru:'Где банк?'}] },
+      { topic:'city', hu:'posta',    ru:'почта',        transcription:'[пошто]',    examples:[{hu:'A postára megyek.',ru:'Я иду на почту.'},{hu:'Hol van a posta?',ru:'Где почта?'},{hu:'A postán adok fel csomagot.',ru:'Я отправляю посылку на почте.'}] },
+      { topic:'city', hu:'iskola',   ru:'школа',        transcription:'[ишколо]',   examples:[{hu:'Az iskolába megyek.',ru:'Я иду в школу.'},{hu:'Hol van az iskola?',ru:'Где школа?'},{hu:'Jó iskola.',ru:'Хорошая школа.'}] },
+      { topic:'city', hu:'állomás',  ru:'станция',      transcription:'[алломаш]',  examples:[{hu:'A pályaudvaron vagyok.',ru:'Я на вокзале.'},{hu:'Hol van az állomás?',ru:'Где станция?'},{hu:'A vonat az állomáson áll.',ru:'Поезд стоит на станции.'}] },
+      { topic:'city', hu:'megálló',  ru:'остановка',    transcription:'[мэгалло]',  examples:[{hu:'A megállóban várok.',ru:'Я жду на остановке.'},{hu:'Hol van a megálló?',ru:'Где остановка?'},{hu:'Melyik megállónál szállok le?',ru:'На какой остановке выходить?'}] },
+      { topic:'city', hu:'busz',     ru:'автобус',      transcription:'[бус]',      examples:[{hu:'Buszra szállok.',ru:'Я сажусь в автобус.'},{hu:'Mikor jön a busz?',ru:'Когда придёт автобус?'},{hu:'Buszsal megyek.',ru:'Я еду на автобусе.'}] },
+      { topic:'city', hu:'villamos', ru:'трамвай',      transcription:'[вилломош]', examples:[{hu:'Villamossal megyek.',ru:'Я еду на трамвае.'},{hu:'Mikor jön a villamos?',ru:'Когда придёт трамвай?'},{hu:'A villamos megáll.',ru:'Трамвай останавливается.'}] },
+      { topic:'city', hu:'metró',    ru:'метро',        transcription:'[мэтро]',    examples:[{hu:'Metróval megyek.',ru:'Я еду на метро.'},{hu:'Hol van a metró?',ru:'Где метро?'},{hu:'Melyik metróvonal ez?',ru:'Какая это ветка метро?'}] },
+      { topic:'city', hu:'taxi',     ru:'такси',        transcription:'[токси]',    examples:[{hu:'Taxiba szállok.',ru:'Я сажусь в такси.'},{hu:'Hívok egy taxit.',ru:'Я вызову такси.'},{hu:'Taxival megyek.',ru:'Я еду на такси.'}] },
+      { topic:'city', hu:'autó',     ru:'машина',       transcription:'[ауто]',     examples:[{hu:'Autóval megyek.',ru:'Я еду на машине.'},{hu:'Az autó gyors.',ru:'Машина быстрая.'},{hu:'Hol van az autóm?',ru:'Где моя машина?'}] },
+      { topic:'city', hu:'vonat',    ru:'поезд',        transcription:'[вонот]',    examples:[{hu:'Vonatra szállok.',ru:'Я сажусь в поезд.'},{hu:'Mikor indul a vonat?',ru:'Когда отправляется поезд?'},{hu:'A vonat késik.',ru:'Поезд опаздывает.'}] },
+      { topic:'city', hu:'repülő',   ru:'самолёт',      transcription:'[рэпюлё]',   examples:[{hu:'Repülőre szállok.',ru:'Я сажусь в самолёт.'},{hu:'A repülő indul.',ru:'Самолёт отправляется.'},{hu:'Repülővel utazom.',ru:'Я лечу на самолёте.'}] },
+      { topic:'city', hu:'bicikli',  ru:'велосипед',    transcription:'[бицикли]',  examples:[{hu:'Biciklivel megyek.',ru:'Я еду на велосипеде.'},{hu:'Kerékpározom.',ru:'Я езжу на велосипеде.'},{hu:'Szép bicikli.',ru:'Красивый велосипед.'}] },
+      { topic:'city', hu:'térkép',   ru:'карта',        transcription:'[тэркэп]',   examples:[{hu:'Megnézem a térképet.',ru:'Я смотрю карту.'},{hu:'Hol a térkép?',ru:'Где карта?'},{hu:'A térképen keresem.',ru:'Я ищу на карте.'}] },
+      // РАБОТА И ИНСТРУМЕНТЫ
+      { topic:'work', hu:'munka',        ru:'работа',       transcription:'[мунко]',    examples:[{hu:'Sok munkám van.',ru:'У меня много работы.'},{hu:'Jó munkát!',ru:'Удачной работы!'},{hu:'Elmegyek munkába.',ru:'Я иду на работу.'}] },
+      { topic:'work', hu:'gyár',         ru:'завод',        transcription:'[дьяр]',     examples:[{hu:'A gyárban dolgozom.',ru:'Я работаю на заводе.'},{hu:'Nagy gyár.',ru:'Большой завод.'},{hu:'A gyár termel.',ru:'Завод производит.'}] },
+      { topic:'work', hu:'iroda',        ru:'офис',         transcription:'[иродо]',    examples:[{hu:'Az irodában dolgozom.',ru:'Я работаю в офисе.'},{hu:'Hol van az iroda?',ru:'Где офис?'},{hu:'Az iroda nagy.',ru:'Офис большой.'}] },
+      { topic:'work', hu:'gép',          ru:'станок, машина',transcription:'[гэп]',     examples:[{hu:'A gép működik.',ru:'Станок работает.'},{hu:'Nagy gép.',ru:'Большой станок.'},{hu:'A gép elromlott.',ru:'Станок сломался.'}] },
+      { topic:'work', hu:'szerszám',     ru:'инструмент',   transcription:'[сэрсам]',   examples:[{hu:'Kell egy szerszám.',ru:'Нужен инструмент.'},{hu:'Hol a szerszám?',ru:'Где инструмент?'},{hu:'Jó szerszám.',ru:'Хороший инструмент.'}] },
+      { topic:'work', hu:'csavar',       ru:'винт',         transcription:'[човор]',    examples:[{hu:'Beteszek egy csavart.',ru:'Я вкручиваю винт.'},{hu:'Kell egy csavar.',ru:'Нужен винт.'},{hu:'Meghúzom a csavart.',ru:'Я затягиваю винт.'}] },
+      { topic:'work', hu:'kalapács',     ru:'молоток',      transcription:'[колопач]',  examples:[{hu:'A kalapáccsal ütök.',ru:'Я бью молотком.'},{hu:'Hol a kalapács?',ru:'Где молоток?'},{hu:'Nagy kalapács.',ru:'Большой молоток.'}] },
+      { topic:'work', hu:'fogó',         ru:'плоскогубцы',  transcription:'[фого]',     examples:[{hu:'Kell egy fogó.',ru:'Нужны плоскогубцы.'},{hu:'A fogóval húzom.',ru:'Я тяну плоскогубцами.'},{hu:'Hol a fogó?',ru:'Где плоскогубцы?'}] },
+      { topic:'work', hu:'kés',          ru:'нож',          transcription:'[кэш]',      examples:[{hu:'A késsel vágok.',ru:'Я режу ножом.'},{hu:'Éles kés.',ru:'Острый нож.'},{hu:'Hol a kés?',ru:'Где нож?'}] },
+      { topic:'work', hu:'drót',         ru:'провод',       transcription:'[дрот]',     examples:[{hu:'Kell egy drót.',ru:'Нужен провод.'},{hu:'A drót szakadt.',ru:'Провод оборвался.'},{hu:'Hosszú drót.',ru:'Длинный провод.'}] },
+      { topic:'work', hu:'anyag',        ru:'материал',     transcription:'[оньог]',    examples:[{hu:'Milyen anyag ez?',ru:'Что это за материал?'},{hu:'Jó anyag.',ru:'Хороший материал.'},{hu:'Kell anyag.',ru:'Нужен материал.'}] },
+      { topic:'work', hu:'alkatrész',    ru:'деталь',       transcription:'[олкотрэс]', examples:[{hu:'Kell egy alkatrész.',ru:'Нужна деталь.'},{hu:'Hol az alkatrész?',ru:'Где деталь?'},{hu:'Hiányzik egy alkatrész.',ru:'Не хватает детали.'}] },
+      { topic:'work', hu:'javítás',      ru:'ремонт',       transcription:'[явиташ]',   examples:[{hu:'A javítás kész.',ru:'Ремонт готов.'},{hu:'Mennyi a javítás?',ru:'Сколько стоит ремонт?'},{hu:'A javítás tart.',ru:'Ремонт продолжается.'}] },
+      { topic:'work', hu:'hiba',         ru:'ошибка',       transcription:'[хибо]',     examples:[{hu:'Hiba van.',ru:'Есть ошибка.'},{hu:'Mi a hiba?',ru:'В чём ошибка?'},{hu:'Kijavítom a hibát.',ru:'Я исправляю ошибку.'}] },
+      { topic:'work', hu:'projekt',      ru:'проект',       transcription:'[прожэкт]',  examples:[{hu:'A projekt kész.',ru:'Проект готов.'},{hu:'Dolgozom a projekten.',ru:'Я работаю над проектом.'},{hu:'Nagy projekt.',ru:'Большой проект.'}] },
+      { topic:'work', hu:'határidő',     ru:'дедлайн',      transcription:'[хатаридё]', examples:[{hu:'Mi a határidő?',ru:'Какой дедлайн?'},{hu:'A határidő holnap.',ru:'Дедлайн завтра.'},{hu:'Tartom a határidőt.',ru:'Я соблюдаю дедлайн.'}] },
+      { topic:'work', hu:'megbeszélés',  ru:'совещание',    transcription:'[мэгбэсэлэш]',examples:[{hu:'Megbeszélésre megyek.',ru:'Я иду на совещание.'},{hu:'Mikor a megbeszélés?',ru:'Когда совещание?'},{hu:'Hosszú megbeszélés.',ru:'Долгое совещание.'}] },
+      { topic:'work', hu:'fizetés',      ru:'зарплата',     transcription:'[физэтэш]',  examples:[{hu:'Mikor van a fizetés?',ru:'Когда зарплата?'},{hu:'Jó a fizetés.',ru:'Хорошая зарплата.'},{hu:'Várom a fizetést.',ru:'Я жду зарплату.'}] },
+      { topic:'work', hu:'szabadság',    ru:'отпуск',       transcription:'[сободшаг]', examples:[{hu:'Szabadságon vagyok.',ru:'Я в отпуске.'},{hu:'Mikor van a szabadság?',ru:'Когда отпуск?'},{hu:'Jó szabadságot!',ru:'Хорошего отпуска!'}] },
+      { topic:'work', hu:'műszak',       ru:'смена',        transcription:'[мюсок]',    examples:[{hu:'Éjjeli műszak.',ru:'Ночная смена.'},{hu:'Mikor van a műszak?',ru:'Когда смена?'},{hu:'Elfogy a műszak.',ru:'Смена заканчивается.'}] },
+      // ВРЕМЯ
+      { topic:'time', hu:'idő',     ru:'время',          transcription:'[идё]',      examples:[{hu:'Mennyi az idő?',ru:'Который час?'},{hu:'Nincs időm.',ru:'У меня нет времени.'},{hu:'Sok idő kell.',ru:'Нужно много времени.'}] },
+      { topic:'time', hu:'nap',     ru:'день',           transcription:'[ноп]',      examples:[{hu:'Jó napot!',ru:'Добрый день!'},{hu:'Egész nap dolgozom.',ru:'Я работаю весь день.'},{hu:'Szép nap van.',ru:'Хороший день.'}] },
+      { topic:'time', hu:'hét',     ru:'неделя',         transcription:'[хэт]',      examples:[{hu:'Ezen a héten dolgozom.',ru:'На этой неделе я работаю.'},{hu:'Jövő héten találkozunk.',ru:'На следующей неделе встретимся.'},{hu:'Hét napja nem aludtam.',ru:'Я не спал семь дней.'}] },
+      { topic:'time', hu:'hónap',   ru:'месяц',          transcription:'[хонап]',    examples:[{hu:'Melyik hónapban születtél?',ru:'В каком месяце ты родился?'},{hu:'Ezen a hónapon belül.',ru:'В этом месяце.'},{hu:'Három hónap múlva.',ru:'Через три месяца.'}] },
+      { topic:'time', hu:'év',      ru:'год',            transcription:'[эв]',       examples:[{hu:'Melyik évben?',ru:'В каком году?'},{hu:'Boldog új évet!',ru:'С Новым годом!'},{hu:'Minden évben utazom.',ru:'Каждый год я путешествую.'}] },
+      { topic:'time', hu:'óra',     ru:'час',            transcription:'[ора]',      examples:[{hu:'Hány óra van?',ru:'Который час?'},{hu:'Egy óra múlva.',ru:'Через час.'},{hu:'Két óráig várok.',ru:'Я жду два часа.'}] },
+      { topic:'time', hu:'perc',    ru:'минута',         transcription:'[пэрц]',     examples:[{hu:'Öt perc múlva.',ru:'Через пять минут.'},{hu:'Egy percig várok.',ru:'Я жду одну минуту.'},{hu:'Nincs egy percem sem.',ru:'У меня нет ни минуты.'}] },
+      { topic:'time', hu:'reggel',  ru:'утро',           transcription:'[рэггэл]',   examples:[{hu:'Reggel korán kelek.',ru:'Утром я встаю рано.'},{hu:'Jó reggelt!',ru:'Доброе утро!'},{hu:'Reggeli kávé.',ru:'Утренний кофе.'}] },
+      { topic:'time', hu:'délután', ru:'после обеда',    transcription:'[дэлутан]',  examples:[{hu:'Délután találkozunk.',ru:'Встретимся после обеда.'},{hu:'Jó délutánt!',ru:'Добрый день!'},{hu:'Szabad délután.',ru:'Свободный полдень.'}] },
+      { topic:'time', hu:'este',    ru:'вечер',          transcription:'[эштэ]',     examples:[{hu:'Este hazamegyek.',ru:'Вечером я иду домой.'},{hu:'Jó estét!',ru:'Добрый вечер!'},{hu:'Az esti séta.',ru:'Вечерняя прогулка.'}] },
+      { topic:'time', hu:'éjszaka', ru:'ночь',           transcription:'[эйсоко]',   examples:[{hu:'Éjjel alszom.',ru:'Ночью я сплю.'},{hu:'Jó éjszakát!',ru:'Спокойной ночи!'},{hu:'Az éjszaka csendes.',ru:'Ночь тихая.'}] },
+      { topic:'time', hu:'ma',      ru:'сегодня',        transcription:'[мо]',       examples:[{hu:'Ma dolgozom.',ru:'Сегодня я работаю.'},{hu:'Ma mit csinálsz?',ru:'Что ты делаешь сегодня?'},{hu:'Ma szép idő van.',ru:'Сегодня хорошая погода.'}] },
+      { topic:'time', hu:'holnap',  ru:'завтра',         transcription:'[холноп]',   examples:[{hu:'Holnap találkozunk.',ru:'Завтра встретимся.'},{hu:'Mi lesz holnap?',ru:'Что будет завтра?'},{hu:'Holnap szabadnap.',ru:'Завтра выходной.'}] },
+      { topic:'time', hu:'tegnap',  ru:'вчера',          transcription:'[тэгноп]',   examples:[{hu:'Tegnap dolgoztam.',ru:'Вчера я работал.'},{hu:'Mi volt tegnap?',ru:'Что было вчера?'},{hu:'Tegnap szép idő volt.',ru:'Вчера была хорошая погода.'}] },
+      { topic:'time', hu:'most',    ru:'сейчас',         transcription:'[мошт]',     examples:[{hu:'Most megyek.',ru:'Сейчас я иду.'},{hu:'Mit csinálsz most?',ru:'Что ты делаешь сейчас?'},{hu:'Most nincs időm.',ru:'Сейчас у меня нет времени.'}] },
+      // ПРИРОДА
+      { topic:'nature', hu:'eső',    ru:'дождь',     transcription:'[эшё]',    examples:[{hu:'Esik az eső.',ru:'Идёт дождь.'},{hu:'Nincs eső.',ru:'Нет дождя.'},{hu:'Az eső megáll.',ru:'Дождь прекращается.'}] },
+      { topic:'nature', hu:'hó',     ru:'снег',      transcription:'[хо]',     examples:[{hu:'Esik a hó.',ru:'Идёт снег.'},{hu:'Sok hó van.',ru:'Много снега.'},{hu:'A hó fehér.',ru:'Снег белый.'}] },
+      { topic:'nature', hu:'nap',    ru:'солнце',    transcription:'[ноп]',    examples:[{hu:'Süt a nap.',ru:'Светит солнце.'},{hu:'A nap meleg.',ru:'Солнце тёплое.'},{hu:'Ma süt a nap.',ru:'Сегодня светит солнце.'}] },
+      { topic:'nature', hu:'szél',   ru:'ветер',     transcription:'[сэл]',    examples:[{hu:'Fúj a szél.',ru:'Дует ветер.'},{hu:'Erős szél.',ru:'Сильный ветер.'},{hu:'Nincs szél.',ru:'Нет ветра.'}] },
+      { topic:'nature', hu:'folyó',  ru:'река',      transcription:'[фойо]',   examples:[{hu:'A folyóban úszom.',ru:'Я плаваю в реке.'},{hu:'Szép folyó.',ru:'Красивая река.'},{hu:'A folyó mély.',ru:'Река глубокая.'}] },
+      { topic:'nature', hu:'tó',     ru:'озеро',     transcription:'[то]',     examples:[{hu:'A tónál vagyok.',ru:'Я у озера.'},{hu:'Szép tó.',ru:'Красивое озеро.'},{hu:'A tóban úszom.',ru:'Я плаваю в озере.'}] },
+      { topic:'nature', hu:'hegy',   ru:'гора',      transcription:'[хэдь]',   examples:[{hu:'A hegyen vagyok.',ru:'Я на горе.'},{hu:'Magas hegy.',ru:'Высокая гора.'},{hu:'Felmegyek a hegyre.',ru:'Я поднимаюсь на гору.'}] },
+      { topic:'nature', hu:'erdő',   ru:'лес',       transcription:'[эрдё]',   examples:[{hu:'Az erdőben sétálok.',ru:'Я гуляю в лесу.'},{hu:'Nagy erdő.',ru:'Большой лес.'},{hu:'Szép erdő.',ru:'Красивый лес.'}] },
+      { topic:'nature', hu:'virág',  ru:'цветок',    transcription:'[вираг]',  examples:[{hu:'Szép virág.',ru:'Красивый цветок.'},{hu:'Virágot veszek.',ru:'Я покупаю цветы.'},{hu:'A virág illatozik.',ru:'Цветок пахнет.'}] },
+      { topic:'nature', hu:'fa',     ru:'дерево',    transcription:'[фо]',     examples:[{hu:'Nagy fa.',ru:'Большое дерево.'},{hu:'A fa magas.',ru:'Дерево высокое.'},{hu:'A fa alatt ülök.',ru:'Я сижу под деревом.'}] },
+      { topic:'nature', hu:'állat',  ru:'животное',  transcription:'[аллот]',  examples:[{hu:'Milyen állat ez?',ru:'Что это за животное?'},{hu:'Szeretem az állatokat.',ru:'Я люблю животных.'},{hu:'Veszélyes állat.',ru:'Опасное животное.'}] },
+      { topic:'nature', hu:'kutya',  ru:'собака',    transcription:'[кутьо]',  examples:[{hu:'A kutya ugat.',ru:'Собака лает.'},{hu:'Szép kutya.',ru:'Красивая собака.'},{hu:'Van kutyád?',ru:'У тебя есть собака?'}] },
+      { topic:'nature', hu:'macska', ru:'кошка',     transcription:'[мочко]',  examples:[{hu:'A macska alszik.',ru:'Кошка спит.'},{hu:'Szép macska.',ru:'Красивая кошка.'},{hu:'Van macskád?',ru:'У тебя есть кошка?'}] },
+      { topic:'nature', hu:'madár',  ru:'птица',     transcription:'[модар]',  examples:[{hu:'A madár énekel.',ru:'Птица поёт.'},{hu:'Szép madár.',ru:'Красивая птица.'},{hu:'A madár repül.',ru:'Птица летит.'}] },
+      { topic:'nature', hu:'hal',    ru:'рыба',      transcription:'[хол]',    examples:[{hu:'A hal úszik.',ru:'Рыба плывёт.'},{hu:'Szép hal.',ru:'Красивая рыба.'},{hu:'A folyóban halak vannak.',ru:'В реке есть рыбы.'}] },
+      // МАГАЗИН
+      { topic:'shop', hu:'ár',           ru:'цена',          transcription:'[ар]',        examples:[{hu:'Mennyi az ár?',ru:'Какова цена?'},{hu:'Jó ár.',ru:'Хорошая цена.'},{hu:'Az ár magas.',ru:'Цена высокая.'}] },
+      { topic:'shop', hu:'forint',       ru:'форинт',        transcription:'[форинт]',    examples:[{hu:'Forintban fizetek.',ru:'Я плачу форинтами.'},{hu:'Ezer forint.',ru:'Тысяча форинтов.'},{hu:'Van forintod?',ru:'У тебя есть форинты?'}] },
+      { topic:'shop', hu:'euró',         ru:'евро',          transcription:'[эуро]',      examples:[{hu:'Euróban fizetek.',ru:'Я плачу евро.'},{hu:'Ötven euró.',ru:'Пятьдесят евро.'},{hu:'Elfogadnak eurót?',ru:'Принимают евро?'}] },
+      { topic:'shop', hu:'pénztár',      ru:'касса',         transcription:'[пэнзтар]',   examples:[{hu:'A pénztárnál fizetek.',ru:'Я плачу на кассе.'},{hu:'Hol a pénztár?',ru:'Где касса?'},{hu:'A pénztár nyitva van.',ru:'Касса открыта.'}] },
+      { topic:'shop', hu:'nyugta',       ru:'чек',           transcription:'[нюгто]',     examples:[{hu:'Kérem a nyugtát.',ru:'Дайте чек.'},{hu:'Van nyugtája?',ru:'У вас есть чек?'},{hu:'Elveszítettem a nyugtát.',ru:'Я потерял чек.'}] },
+      { topic:'shop', hu:'visszajáró',   ru:'сдача',         transcription:'[виссояро]',  examples:[{hu:'Hol a visszajáró?',ru:'Где сдача?'},{hu:'Visszajáró kell.',ru:'Нужна сдача.'},{hu:'Tartsa meg a visszajárót!',ru:'Сдачи не надо!'}] },
+      { topic:'shop', hu:'kosár',        ru:'корзина',       transcription:'[кошар]',     examples:[{hu:'Teszem a kosárba.',ru:'Я кладу в корзину.'},{hu:'Tele van a kosár.',ru:'Корзина полна.'},{hu:'Hol a kosár?',ru:'Где корзина?'}] },
+      { topic:'shop', hu:'akció',        ru:'акция',         transcription:'[окцио]',     examples:[{hu:'Akció van!',ru:'Есть акция!'},{hu:'Jó akció.',ru:'Хорошая акция.'},{hu:'Mit tartalmaz az akció?',ru:'Что включает акция?'}] },
+      { topic:'shop', hu:'méret',        ru:'размер',        transcription:'[мэрэт]',     examples:[{hu:'Milyen méret kell?',ru:'Какой размер нужен?'},{hu:'Kicsi a méret.',ru:'Размер маленький.'},{hu:'Megmutatom a méretet.',ru:'Я покажу размер.'}] },
+      { topic:'shop', hu:'szín',         ru:'цвет',          transcription:'[син]',       examples:[{hu:'Milyen szín tetszik?',ru:'Какой цвет нравится?'},{hu:'Szép szín.',ru:'Красивый цвет.'},{hu:'Más szín kell.',ru:'Нужен другой цвет.'}] },
+      { topic:'shop', hu:'minőség',      ru:'качество',      transcription:'[минёшэг]',   examples:[{hu:'Jó minőség.',ru:'Хорошее качество.'},{hu:'A minőség fontos.',ru:'Качество важно.'},{hu:'Milyen a minőség?',ru:'Какое качество?'}] },
+      { topic:'shop', hu:'garancia',     ru:'гарантия',      transcription:'[горонцио]',  examples:[{hu:'Van garancia?',ru:'Есть гарантия?'},{hu:'Egy év garancia.',ru:'Один год гарантии.'},{hu:'A garancia lejárt.',ru:'Гарантия истекла.'}] },
+      { topic:'shop', hu:'csomag',       ru:'упаковка',      transcription:'[чомог]',     examples:[{hu:'Szép csomag.',ru:'Красивая упаковка.'},{hu:'A csomag sérült.',ru:'Упаковка повреждена.'},{hu:'Kérek egy csomagot.',ru:'Дайте упаковку.'}] },
+      { topic:'shop', hu:'ajándék',      ru:'подарок',       transcription:'[ояндэк]',    examples:[{hu:'Ajándékot veszek.',ru:'Я покупаю подарок.'},{hu:'Szép ajándék.',ru:'Красивый подарок.'},{hu:'Kinek az ajándék?',ru:'Кому подарок?'}] },
+      { topic:'shop', hu:'kedvezmény',   ru:'скидка',        transcription:'[кэдвэзмэнь]',examples:[{hu:'Van kedvezmény?',ru:'Есть скидка?'},{hu:'Jó kedvezmény.',ru:'Хорошая скидка.'},{hu:'Mennyi a kedvezmény?',ru:'Сколько составляет скидка?'}] },
+      // ДОКУМЕНТЫ
+      { topic:'docs', hu:'útlevél',      ru:'паспорт',        transcription:'[утлэвэл]',    examples:[{hu:'Hol az útlevelem?',ru:'Где мой паспорт?'},{hu:'Érvényes az útlevelem.',ru:'Мой паспорт действителен.'},{hu:'Mutassa az útlevelét!',ru:'Предъявите паспорт!'}] },
+      { topic:'docs', hu:'személyi',     ru:'удостоверение',  transcription:'[сэмэйи]',     examples:[{hu:'Mutassa a személyit!',ru:'Предъявите удостоверение!'},{hu:'Van személyije?',ru:'У вас есть удостоверение?'},{hu:'Hol a személyim?',ru:'Где моё удостоверение?'}] },
+      { topic:'docs', hu:'vízum',        ru:'виза',           transcription:'[визум]',      examples:[{hu:'Van vízumom.',ru:'У меня есть виза.'},{hu:'Kell vízum?',ru:'Нужна виза?'},{hu:'Vízumot igénylek.',ru:'Я оформляю визу.'}] },
+      { topic:'docs', hu:'engedély',     ru:'разрешение',     transcription:'[энгэдэй]',    examples:[{hu:'Van engedélye?',ru:'У вас есть разрешение?'},{hu:'Kérem az engedélyt.',ru:'Дайте разрешение.'},{hu:'Az engedély lejárt.',ru:'Разрешение истекло.'}] },
+      { topic:'docs', hu:'szerződés',    ru:'договор',        transcription:'[сэрзёдэш]',   examples:[{hu:'Aláírom a szerződést.',ru:'Я подписываю договор.'},{hu:'Olvasom a szerződést.',ru:'Я читаю договор.'},{hu:'Kész a szerződés.',ru:'Договор готов.'}] },
+      { topic:'docs', hu:'kérelem',      ru:'заявление',      transcription:'[кэрэлэм]',    examples:[{hu:'Kérelmet adok be.',ru:'Я подаю заявление.'},{hu:'A kérelem elfogadva.',ru:'Заявление принято.'},{hu:'Kitöltöm a kérelmet.',ru:'Я заполняю заявление.'}] },
+      { topic:'docs', hu:'nyomtatvány',  ru:'бланк',          transcription:'[ньомтотвань]',examples:[{hu:'Kitöltöm a nyomtatványt.',ru:'Я заполняю бланк.'},{hu:'Hol a nyomtatvány?',ru:'Где бланк?'},{hu:'Kérem a nyomtatványt.',ru:'Дайте бланк.'}] },
+      { topic:'docs', hu:'aláírás',      ru:'подпись',        transcription:'[олаираш]',    examples:[{hu:'Kérem az aláírást.',ru:'Дайте подпись.'},{hu:'Az aláírás kell.',ru:'Нужна подпись.'},{hu:'Aláírom.',ru:'Я подписываю.'}] },
+      { topic:'docs', hu:'hivatal',      ru:'учреждение',     transcription:'[хивотол]',    examples:[{hu:'A hivatalba megyek.',ru:'Я иду в учреждение.'},{hu:'Hol van a hivatal?',ru:'Где учреждение?'},{hu:'A hivatal nyitva.',ru:'Учреждение открыто.'}] },
+      { topic:'docs', hu:'sor',          ru:'очередь',        transcription:'[шор]',        examples:[{hu:'Sorban állok.',ru:'Я стою в очереди.'},{hu:'Hosszú a sor.',ru:'Очередь длинная.'},{hu:'Melyik sorban?',ru:'В какой очереди?'}] },
+      { topic:'docs', hu:'irat',         ru:'документ',       transcription:'[ирот]',       examples:[{hu:'Hol az irat?',ru:'Где документ?'},{hu:'Az irat fontos.',ru:'Документ важен.'},{hu:'Megvan az irat.',ru:'Документ есть.'}] },
+      { topic:'docs', hu:'határ',        ru:'граница',        transcription:'[хотар]',      examples:[{hu:'A határon vagyok.',ru:'Я на границе.'},{hu:'Átkelek a határon.',ru:'Я пересекаю границу.'},{hu:'A határ nyitva van.',ru:'Граница открыта.'}] },
+      { topic:'docs', hu:'illeték',      ru:'пошлина',        transcription:'[иллэтэк]',    examples:[{hu:'Mennyi az illeték?',ru:'Сколько пошлина?'},{hu:'Fizetem az illetéket.',ru:'Я плачу пошлину.'},{hu:'Az illeték magas.',ru:'Пошлина высокая.'}] },
+      { topic:'docs', hu:'bélyeg',       ru:'печать',         transcription:'[бэйэг]',      examples:[{hu:'Kell egy bélyeg.',ru:'Нужна печать.'},{hu:'Van bélyeg?',ru:'Есть печать?'},{hu:'Leütöm a bélyeget.',ru:'Я ставлю печать.'}] },
+      { topic:'docs', hu:'ügyintéző',   ru:'чиновник',       transcription:'[юдьинтэзё]',  examples:[{hu:'Az ügyintéző segít.',ru:'Чиновник помогает.'},{hu:'Hol az ügyintéző?',ru:'Где чиновник?'},{hu:'Kérem az ügyintézőt.',ru:'Позовите чиновника.'}] },
+      // ЭМОЦИИ
+      { topic:'emotions', hu:'kérdés',      ru:'вопрос',          transcription:'[кэрдэш]',    examples:[{hu:'Van kérdése?',ru:'У вас есть вопрос?'},{hu:'Jó kérdés.',ru:'Хороший вопрос.'},{hu:'Felteszek egy kérdést.',ru:'Я задаю вопрос.'}] },
+      { topic:'emotions', hu:'válasz',      ru:'ответ',           transcription:'[валос]',     examples:[{hu:'Mi a válasz?',ru:'Какой ответ?'},{hu:'Jó válasz.',ru:'Хороший ответ.'},{hu:'Várom a választ.',ru:'Я жду ответа.'}] },
+      { topic:'emotions', hu:'probléma',    ru:'проблема',        transcription:'[проблэмо]',  examples:[{hu:'Mi a probléma?',ru:'В чём проблема?'},{hu:'Nincs probléma.',ru:'Нет проблем.'},{hu:'Megoldom a problémát.',ru:'Я решаю проблему.'}] },
+      { topic:'emotions', hu:'segítség',    ru:'помощь',          transcription:'[шэгитшэг]',  examples:[{hu:'Kell segítség?',ru:'Нужна помощь?'},{hu:'Köszönöm a segítséget.',ru:'Спасибо за помощь.'},{hu:'Segítség!',ru:'Помогите!'}] },
+      { topic:'emotions', hu:'köszönet',    ru:'благодарность',   transcription:'[кёсёнэт]',   examples:[{hu:'Köszönet mindenkinek.',ru:'Благодарность всем.'},{hu:'Nagy köszönet.',ru:'Большая благодарность.'},{hu:'Kifejezem a köszönetemet.',ru:'Я выражаю благодарность.'}] },
+      { topic:'emotions', hu:'bocsánat',    ru:'извинение',       transcription:'[бочанот]',   examples:[{hu:'Bocsánat!',ru:'Извините!'},{hu:'Kérem a bocsánatát.',ru:'Прошу прощения.'},{hu:'Nincs mit bocsátani.',ru:'Не за что прощать.'}] },
+      { topic:'emotions', hu:'öröm',        ru:'радость',         transcription:'[ёрём]',      examples:[{hu:'Nagy öröm.',ru:'Большая радость.'},{hu:'Örömmel teszem.',ru:'Делаю с радостью.'},{hu:'Az öröm látható.',ru:'Радость видна.'}] },
+      { topic:'emotions', hu:'bánat',       ru:'грусть',          transcription:'[банот]',     examples:[{hu:'Nagy bánat.',ru:'Большая грусть.'},{hu:'Bánatban vagyok.',ru:'Я в грусти.'},{hu:'A bánat elmúlik.',ru:'Грусть проходит.'}] },
+      { topic:'emotions', hu:'meglepetés',  ru:'удивление',       transcription:'[мэглэпэтэш]',examples:[{hu:'Nagy meglepetés!',ru:'Большой сюрприз!'},{hu:'Meglepetéssel fogadom.',ru:'Я встречаю с удивлением.'},{hu:'Szép meglepetés.',ru:'Приятный сюрприз.'}] },
+      { topic:'emotions', hu:'félelem',     ru:'страх',           transcription:'[фэлэлэм]',   examples:[{hu:'Nincs félelem.',ru:'Нет страха.'},{hu:'Legyőzöm a félelmet.',ru:'Я преодолеваю страх.'},{hu:'A félelem elmúlik.',ru:'Страх проходит.'}] },
+      { topic:'emotions', hu:'szeretet',    ru:'любовь',          transcription:'[сэрэтэт]',   examples:[{hu:'Nagy szeretet.',ru:'Большая любовь.'},{hu:'Szeretettel ajánlom.',ru:'Предлагаю с любовью.'},{hu:'Érzem a szeretetet.',ru:'Я чувствую любовь.'}] },
+      { topic:'emotions', hu:'barátság',    ru:'дружба',          transcription:'[борачшаг]',  examples:[{hu:'Jó barátság.',ru:'Хорошая дружба.'},{hu:'A barátság fontos.',ru:'Дружба важна.'},{hu:'Régi barátság.',ru:'Старая дружба.'}] },
+      { topic:'emotions', hu:'vita',        ru:'спор',            transcription:'[вито]',      examples:[{hu:'Nagy vita.',ru:'Большой спор.'},{hu:'Ne vitázz!',ru:'Не спорь!'},{hu:'A vita megoldódott.',ru:'Спор разрешился.'}] },
+      { topic:'emotions', hu:'bizalom',     ru:'доверие',         transcription:'[бизолом]',   examples:[{hu:'Nagy bizalom.',ru:'Большое доверие.'},{hu:'Bízom benned.',ru:'Я доверяю тебе.'},{hu:'A bizalom fontos.',ru:'Доверие важно.'}] },
+      { topic:'emotions', hu:'megértés',    ru:'понимание',       transcription:'[мэгэртэш]',  examples:[{hu:'Köszönöm a megértést.',ru:'Спасибо за понимание.'},{hu:'Megértéssel fogadom.',ru:'Я принимаю с пониманием.'},{hu:'A megértés fontos.',ru:'Понимание важно.'}] },
+    ];
+
+    /* ── Render nouns ── */
+    const nounsList = document.getElementById('nouns-list');
+    let activeNounTopic = 'all';
+
+    function renderNouns() {
+      const list = activeNounTopic === 'all'
+        ? nouns
+        : nouns.filter(n => n.topic === activeNounTopic);
+      nounsList.innerHTML = '';
+      if (!list.length) {
+        nounsList.innerHTML = '<p class="no-results">Ничего не найдено</p>';
+        return;
+      }
+      list.forEach(noun => {
+        const card = document.createElement('div');
+        card.className = 'verb-card';
+        card.innerHTML = `
+          <div class="verb-card-left">
+            <span class="verb-hu">${noun.hu}</span>
+            <span class="verb-ru">${noun.ru}</span>
+          </div>
+          <span class="verb-arrow">›</span>
+        `;
+        card.addEventListener('click', () => openModal(noun));
+        nounsList.appendChild(card);
+      });
+    }
+
+    renderNouns();
+
+    document.getElementById('noun-filter-tabs').addEventListener('click', e => {
+      const tab = e.target.closest('.filter-tab');
+      if (!tab) return;
+      activeNounTopic = tab.dataset.topic;
+      document.querySelectorAll('#noun-filter-tabs .filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderNouns();
+    });
+
+    /* ── Modal ── */
+    const overlay   = document.getElementById('modal-overlay');
+    const modal     = document.getElementById('modal');
+    let currentVerb = null;
+
+    function getSavedVerbs() {
+      try { return JSON.parse(localStorage.getItem('savedVerbs') || '[]'); }
+      catch { return []; }
+    }
+
+    function openModal(verb) {
+      currentVerb = verb;
+
+      document.getElementById('modal-word').textContent         = verb.hu;
+      document.getElementById('modal-transcription').textContent = verb.transcription;
+      document.getElementById('modal-translation').textContent  = verb.ru;
+
+      const examplesEl = document.getElementById('modal-examples');
+      examplesEl.innerHTML = verb.examples.map(ex => `
+        <div class="example-item">
+          <div class="example-hu">${ex.hu}</div>
+          <div class="example-ru">${ex.ru}</div>
+        </div>
+      `).join('');
+
+      updateSaveBtn(verb);
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+      currentVerb = null;
+    }
+
+    function updateSaveBtn(verb) {
+      const saved  = getSavedVerbs();
+      const isSaved = saved.some(v => v.hu === verb.hu);
+      const btn    = document.getElementById('modal-save-btn');
+      const label  = document.getElementById('modal-save-label');
+      btn.classList.toggle('saved', isSaved);
+      label.textContent = isSaved ? 'В СЛОВАРЕ ✓' : 'СОХРАНИТЬ В СЛОВАРЬ';
+    }
+
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) closeModal();
+    });
+
+    /* ── Listen (Web Speech API) ── */
+    document.getElementById('modal-listen-btn').addEventListener('click', () => {
+      if (!currentVerb || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(currentVerb.hu);
+      utt.lang = 'hu-HU';
+      utt.rate = 0.85;
+      window.speechSynthesis.speak(utt);
+    });
+
+    /* ── Save to dictionary ── */
+    document.getElementById('modal-save-btn').addEventListener('click', () => {
+      if (!currentVerb) return;
+      const saved   = getSavedVerbs();
+      const idx     = saved.findIndex(v => v.hu === currentVerb.hu);
+      if (idx === -1) {
+        saved.push({ ...currentVerb, savedAt: new Date().toISOString() });
+      } else {
+        saved.splice(idx, 1);
+      }
+      localStorage.setItem('savedVerbs', JSON.stringify(saved));
+      updateSaveBtn(currentVerb);
+      renderDictionary();
+    });
+    /* ── Assistant screen ── */
+    (function () {
+      const micBtn      = document.getElementById('asst-mic-btn');
+      const micStatus   = document.getElementById('asst-mic-status');
+      const inputEl     = document.getElementById('asst-input');
+      const sendBtn     = document.getElementById('asst-send-btn');
+      const loadingEl   = document.getElementById('asst-loading');
+      const resultEl    = document.getElementById('asst-result');
+      const resultWord  = document.getElementById('asst-result-word');
+      const resultBody  = document.getElementById('asst-result-content');
+      const resultActs  = document.getElementById('asst-result-actions');
+      const listenBtn   = document.getElementById('asst-listen-result-btn');
+      const saveBtn     = document.getElementById('asst-save-result-btn');
+      const saveLbl     = document.getElementById('asst-save-label');
+      const apiInput    = document.getElementById('asst-api-input');
+      const settingsTgl = document.getElementById('asst-settings-toggle');
+      const settingsBody= document.getElementById('asst-settings-body');
+      const settingsArrow=document.getElementById('asst-settings-arrow');
+
+      const GEMINI_KEY  = 'geminiApiKey';
+      apiInput.value    = localStorage.getItem(GEMINI_KEY) || '';
+      apiInput.addEventListener('change', () =>
+        localStorage.setItem(GEMINI_KEY, apiInput.value.trim())
+      );
+
+      settingsTgl.addEventListener('click', () => {
+        settingsBody.classList.toggle('open');
+        settingsArrow.classList.toggle('open');
+      });
+
+      /* ── Mic ── */
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let recognition = null, isRecording = false;
+      let currentWord  = '';
+      let lastResult   = null;
+
+      if (SR) {
+        recognition = new SR();
+        recognition.lang            = 'hu-HU';
+        recognition.continuous      = false;
+        recognition.interimResults  = false;
+        recognition.onresult = e => {
+          const text = e.results[0][0].transcript.trim();
+          inputEl.value = text;
+          stopRec();
+          query(text);
+        };
+        recognition.onerror = () => stopRec();
+        recognition.onend   = () => stopRec();
+      } else {
+        micStatus.textContent = 'Микрофон недоступен в этом браузере';
+      }
+
+      function startRec() {
+        if (!recognition) return;
+        isRecording = true;
+        micBtn.classList.add('recording');
+        micStatus.textContent = 'Говорите по-венгерски…';
+        micStatus.classList.add('active');
+        try { recognition.start(); } catch (_) { stopRec(); }
+      }
+
+      function stopRec() {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        micStatus.textContent = SR ? 'Нажмите чтобы говорить' : 'Микрофон недоступен';
+        micStatus.classList.remove('active');
+      }
+
+      micBtn.addEventListener('click', () => {
+        if (!recognition) { return; }
+        isRecording ? recognition.stop() : startRec();
+      });
+
+      /* ── Send ── */
+      sendBtn.addEventListener('click', () => {
+        const t = inputEl.value.trim();
+        if (t) query(t);
+      });
+
+      inputEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { const t = inputEl.value.trim(); if (t) query(t); }
+      });
+
+      /* ── Gemini ── */
+      async function query(text) {
+        const key = apiInput.value.trim() || localStorage.getItem(GEMINI_KEY) || '';
+        currentWord = text;
+        resultEl.style.display = 'none';
+        lastResult = null;
+
+        if (!key) {
+          showInfo(
+            text,
+            '<span style="color:#aaa">Введите Gemini API ключ в настройках ниже.<br>' +
+            'Бесплатный ключ: <a href="https://aistudio.google.com" target="_blank" ' +
+            'rel="noopener" style="color:var(--orange)">aistudio.google.com</a></span>',
+            false
+          );
+          settingsBody.classList.add('open');
+          settingsArrow.classList.add('open');
+          return;
+        }
+
+        loadingEl.style.display = 'flex';
+
+        const prompt =
+          `Пользователь написал или произнёс венгерское слово или фразу: "${text}"\n` +
+          `Ответь строго в этом формате (без лишних слов):\n` +
+          `1. Перевод: [перевод на русский]\n` +
+          `2. Транскрипция: [произношение русскими буквами]\n` +
+          `3. Пример: [пример на венгерском] — [перевод примера]`;
+
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            }
+          );
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data  = await res.json();
+          const raw   = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          renderResult(text, raw);
+        } catch (err) {
+          showInfo(text,
+            `<span style="color:#c83232">Ошибка: ${err.message}</span>`, false);
+        } finally {
+          loadingEl.style.display = 'none';
+        }
+      }
+
+      function parseRaw(raw) {
+        let translation = '', transcription = '', example = '';
+        raw.split('\n').forEach(line => {
+          const l = line.trim();
+          const m1 = l.match(/^1\.\s*Перевод\s*:\s*(.+)/i);
+          const m2 = l.match(/^2\.\s*Транскрипция\s*:\s*(.+)/i);
+          const m3 = l.match(/^3\.\s*Пример\s*:\s*(.+)/i);
+          if (m1) translation   = m1[1].trim();
+          if (m2) transcription = m2[1].trim();
+          if (m3) example       = m3[1].trim();
+        });
+        return { translation: translation || raw.trim(), transcription, example };
+      }
+
+      function renderResult(word, raw) {
+        const { translation, transcription, example } = parseRaw(raw);
+        lastResult = { word, translation, transcription, example };
+
+        resultWord.textContent = word;
+        resultBody.innerHTML   = '';
+
+        [
+          { label: 'Перевод',      value: translation },
+          { label: 'Транскрипция', value: transcription },
+          { label: 'Пример',       value: example },
+        ].filter(r => r.value).forEach(({ label, value }) => {
+          const row = document.createElement('div');
+          row.className = 'asst-result-row';
+          row.innerHTML =
+            `<span class="asst-result-label">${label}</span>` +
+            `<span class="asst-result-value">${value}</span>`;
+          resultBody.appendChild(row);
+        });
+
+        saveLbl.textContent = 'СОХРАНИТЬ';
+        saveBtn.classList.remove('saved');
+        resultActs.style.display = 'flex';
+        resultEl.style.display   = 'block';
+        resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function showInfo(word, html, showActions) {
+        resultWord.textContent     = word;
+        resultBody.innerHTML       = `<div class="asst-result-row"><span class="asst-result-value">${html}</span></div>`;
+        resultActs.style.display   = showActions ? 'flex' : 'none';
+        resultEl.style.display     = 'block';
+      }
+
+      /* ── Listen ── */
+      listenBtn.addEventListener('click', () => {
+        if (!currentWord || !window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(currentWord);
+        u.lang = 'hu-HU'; u.rate = 0.85;
+        window.speechSynthesis.speak(u);
+      });
+
+      /* ── Save ── */
+      saveBtn.addEventListener('click', () => {
+        if (!lastResult) return;
+        const saved = getSavedVerbs();
+        const exists = saved.some(v => v.hu === lastResult.word);
+        if (!exists) {
+          const parts = lastResult.example.split('—');
+          saved.push({
+            hu: lastResult.word,
+            ru: lastResult.translation,
+            transcription: lastResult.transcription ? `[${lastResult.transcription}]` : '',
+            examples: lastResult.example
+              ? [{ hu: (parts[0] || lastResult.example).trim(),
+                   ru: (parts[1] || '').trim() }]
+              : [],
+            savedAt: new Date().toISOString(),
+          });
+          localStorage.setItem('savedVerbs', JSON.stringify(saved));
+          renderDictionary();
+        }
+        saveBtn.classList.add('saved');
+        saveLbl.textContent = 'СОХРАНЕНО ✓';
+      });
+
+      /* ── Camera + OCR ── */
+      const camBtn      = document.getElementById('asst-cam-btn');
+      const camInput    = document.getElementById('asst-cam-input');
+      const imgPreview  = document.getElementById('asst-img-preview');
+      const previewImg  = document.getElementById('asst-preview-img');
+      const ocrBar      = document.getElementById('asst-ocr-bar');
+      const ocrText     = document.getElementById('asst-ocr-text');
+
+      camBtn.addEventListener('click', () => camInput.click());
+
+      camInput.addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        camInput.value = '';
+
+        // Show preview
+        const url = URL.createObjectURL(file);
+        previewImg.src = url;
+        imgPreview.style.display = 'block';
+        ocrBar.style.display     = 'flex';
+        ocrText.textContent      = 'Читаю текст...';
+
+        // Scroll to preview
+        imgPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        // Reset result area
+        resultEl.style.display  = 'none';
+        loadingEl.style.display = 'none';
+
+        try {
+          if (typeof Tesseract === 'undefined') throw new Error('Tesseract не загружен');
+
+          const result = await Tesseract.recognize(file, 'hun+rus+eng', {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                ocrText.textContent = `Читаю текст... ${Math.round(m.progress * 100)}%`;
+              }
+            }
+          });
+
+          const text = result.data.text.trim();
+          ocrBar.style.display = 'none';
+
+          if (!text) {
+            ocrText.textContent    = 'Текст не найден на фото';
+            ocrBar.style.display   = 'flex';
+            ocrBar.querySelector('.asst-ocr-spinner').style.display = 'none';
+            return;
+          }
+
+          // Send to Gemini with camera prompt
+          await queryCameraText(text);
+
+        } catch (err) {
+          ocrText.textContent  = `Ошибка: ${err.message}`;
+          ocrBar.style.display = 'flex';
+        }
+      });
+
+      async function queryCameraText(rawText) {
+        const key = document.getElementById('asst-api-input').value.trim()
+          || localStorage.getItem('geminiApiKey') || '';
+
+        if (!key) {
+          showCameraResult(rawText, null);
+          document.getElementById('asst-settings-body').classList.add('open');
+          document.getElementById('asst-settings-arrow').classList.add('open');
+          return;
+        }
+
+        currentWord = rawText.split(/\n|\s/).filter(Boolean)[0]?.substring(0, 40) || '';
+        loadingEl.style.display = 'flex';
+
+        const prompt =
+          `Это текст с фотографии на венгерском языке: "${rawText}".\n` +
+          `Переведи на русский язык. Если есть отдельные слова — дай перевод каждого. ` +
+          `Объясни контекст если нужно.`;
+
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            }
+          );
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data     = await res.json();
+          const response = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          showCameraResult(rawText, response);
+        } catch (err) {
+          showCameraResult(rawText, null, err.message);
+        } finally {
+          loadingEl.style.display = 'none';
+        }
+      }
+
+      function showCameraResult(original, translation, errorMsg) {
+        lastResult = null;
+        resultWord.textContent = '📷 С фото';
+        resultBody.innerHTML   = '';
+
+        // Original text row
+        const origRow  = document.createElement('div');
+        origRow.className = 'asst-result-row';
+        origRow.innerHTML =
+          `<span class="asst-result-label">Оригинал</span>` +
+          `<span class="asst-result-value" style="font-style:italic;color:#999;white-space:pre-wrap">${original}</span>`;
+        resultBody.appendChild(origRow);
+
+        if (errorMsg) {
+          const errRow = document.createElement('div');
+          errRow.className = 'asst-result-row';
+          errRow.innerHTML =
+            `<span class="asst-result-label">Ошибка</span>` +
+            `<span class="asst-result-value" style="color:#c83232">${errorMsg}</span>`;
+          resultBody.appendChild(errRow);
+          resultActs.style.display = 'none';
+        } else if (!translation) {
+          const infoRow = document.createElement('div');
+          infoRow.className = 'asst-result-row';
+          infoRow.innerHTML =
+            `<span class="asst-result-value" style="color:#aaa">` +
+            `Добавьте Gemini API ключ в настройках ниже</span>`;
+          resultBody.appendChild(infoRow);
+          resultActs.style.display = 'none';
+        } else {
+          const transRow = document.createElement('div');
+          transRow.className = 'asst-result-row';
+          transRow.innerHTML =
+            `<span class="asst-result-label">Перевод</span>` +
+            `<span class="asst-result-value" style="white-space:pre-wrap">${translation}</span>`;
+          resultBody.appendChild(transRow);
+
+          // Store for save
+          lastResult = { word: original, translation, transcription: '', example: '' };
+
+          // Hide listen btn (no single word for TTS)
+          document.getElementById('asst-listen-result-btn').style.display = 'none';
+          saveLbl.textContent = 'СОХРАНИТЬ';
+          saveBtn.classList.remove('saved');
+          resultActs.style.display = 'flex';
+        }
+
+        resultEl.style.display = 'block';
+        resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Restore listen btn on regular queries
+      const origQuery = query; // keep reference to restore listen btn
+      document.getElementById('asst-send-btn').addEventListener('click', () => {
+        document.getElementById('asst-listen-result-btn').style.display = '';
+      }, true);
+      document.getElementById('asst-mic-btn').addEventListener('click', () => {
+        document.getElementById('asst-listen-result-btn').style.display = '';
+      }, true);
+    })();
+
+    /* ── Dictionary screen ── */
+    function pluralWords(n) {
+      const mod10 = n % 10, mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return 'слово';
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'слова';
+      return 'слов';
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    }
+
+    function renderDictionary() {
+      const saved   = getSavedVerbs();
+      const listEl  = document.getElementById('dict-list');
+      const countEl = document.getElementById('dict-count');
+      const footer  = document.getElementById('dict-footer');
+
+      countEl.textContent = saved.length
+        ? `${saved.length} ${pluralWords(saved.length)}`
+        : '';
+
+      listEl.innerHTML = '';
+
+      if (!saved.length) {
+        footer.style.display = 'none';
+        listEl.innerHTML = `
+          <div class="dict-empty">
+            <span class="dict-empty-icon">♡</span>
+            <p>Сохраняйте слова нажимая&nbsp;♡ в карточках</p>
+          </div>`;
+        return;
+      }
+
+      footer.style.display = 'block';
+
+      saved.forEach((word, idx) => {
+        const item = document.createElement('div');
+        item.className = 'dict-item';
+        item.innerHTML = `
+          <div class="dict-item-info">
+            <span class="dict-item-hu">${word.direction === 'ru->hu' ? word.ru : word.hu}</span>
+            <span class="dict-item-ru">${word.direction === 'ru->hu' ? word.hu : word.ru}</span>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
+              ${word.savedAt ? `<span class="dict-item-date">${formatDate(word.savedAt)}</span>` : ''}
+              ${word.manual && word.direction === 'ru->hu'
+                ? `<span class="dict-dir-badge">🇷🇺 → 🇭🇺</span>`
+                : word.manual
+                  ? `<span class="dict-dir-badge">🇭🇺 → 🇷🇺</span>`
+                  : ''}
+            </div>
+          </div>
+          <div class="dict-item-actions">
+            <button class="dict-action-btn dict-listen-btn" data-word="${word.hu}" aria-label="Послушать">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="12" y1="19" x2="12" y2="23" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="8"  y1="23" x2="16" y2="23" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="dict-action-btn dict-delete-btn" data-idx="${idx}" aria-label="Удалить">
+              <svg viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
+          </div>`;
+        listEl.appendChild(item);
+      });
+    }
+
+    document.getElementById('dict-list').addEventListener('click', e => {
+      const listenBtn = e.target.closest('.dict-listen-btn');
+      const deleteBtn = e.target.closest('.dict-delete-btn');
+
+      if (listenBtn && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(listenBtn.dataset.word);
+        utt.lang = 'hu-HU';
+        utt.rate = 0.85;
+        window.speechSynthesis.speak(utt);
+      }
+
+      if (deleteBtn) {
+        const saved = getSavedVerbs();
+        saved.splice(parseInt(deleteBtn.dataset.idx, 10), 1);
+        localStorage.setItem('savedVerbs', JSON.stringify(saved));
+        renderDictionary();
+      }
+    });
+
+    /* ── Add word form ── */
+    (function () {
+      const overlay   = document.getElementById('dict-form-overlay');
+      const field1    = document.getElementById('dict-form-field1');
+      const field2    = document.getElementById('dict-form-field2');
+      const label1    = document.getElementById('dict-form-label1');
+      const label2    = document.getElementById('dict-form-label2');
+      const saveBtn   = document.getElementById('dict-form-save');
+      const cancelBtn = document.getElementById('dict-form-cancel');
+      const btnHu2Ru  = document.getElementById('dict-dir-hu2ru');
+      const btnRu2Hu  = document.getElementById('dict-dir-ru2hu');
+
+      // Direction: 'hu->ru' | 'ru->hu'
+      let dir = 'hu->ru';
+
+      const config = {
+        'hu->ru': {
+          label1: 'Венгерское слово',
+          placeholder1: 'например: köszönöm',
+          label2: 'Перевод на русский',
+          placeholder2: 'например: спасибо',
+        },
+        'ru->hu': {
+          label1: 'Русское слово',
+          placeholder1: 'например: спасибо',
+          label2: 'Перевод на венгерский',
+          placeholder2: 'например: köszönöm',
+        },
+      };
+
+      function applyDirection(d) {
+        dir = d;
+        const c = config[d];
+        label1.textContent       = c.label1;
+        field1.placeholder       = c.placeholder1;
+        label2.textContent       = c.label2;
+        field2.placeholder       = c.placeholder2;
+        btnHu2Ru.classList.toggle('active', d === 'hu->ru');
+        btnRu2Hu.classList.toggle('active', d === 'ru->hu');
+        field1.value = '';
+        field2.value = '';
+        saveBtn.disabled = true;
+        field1.focus();
+      }
+
+      btnHu2Ru.addEventListener('click', () => applyDirection('hu->ru'));
+      btnRu2Hu.addEventListener('click', () => applyDirection('ru->hu'));
+
+      function openForm() {
+        applyDirection('hu->ru');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => field1.focus(), 320);
+      }
+
+      function closeForm() {
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      function checkInputs() {
+        saveBtn.disabled = !(field1.value.trim() && field2.value.trim());
+      }
+
+      document.getElementById('dict-add-btn').addEventListener('click', openForm);
+      cancelBtn.addEventListener('click', closeForm);
+      overlay.addEventListener('click', e => { if (e.target === overlay) closeForm(); });
+      field1.addEventListener('input', checkInputs);
+      field2.addEventListener('input', checkInputs);
+
+      field1.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && field1.value.trim()) field2.focus();
+      });
+      field2.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !saveBtn.disabled) saveBtn.click();
+      });
+
+      saveBtn.addEventListener('click', () => {
+        const v1 = field1.value.trim();
+        const v2 = field2.value.trim();
+        if (!v1 || !v2) return;
+
+        // Always store hu = Hungarian word, ru = Russian word
+        const hu = dir === 'hu->ru' ? v1 : v2;
+        const ru = dir === 'hu->ru' ? v2 : v1;
+
+        const saved = getSavedVerbs();
+        saved.unshift({
+          hu,
+          ru,
+          transcription: '',
+          examples: [],
+          savedAt: new Date().toISOString(),
+          manual: true,
+          direction: dir,
+        });
+        localStorage.setItem('savedVerbs', JSON.stringify(saved));
+        renderDictionary();
+        renderHome();
+        closeForm();
+      });
+    })();
+
+    document.getElementById('dict-clear-btn').addEventListener('click', () => {
+      if (confirm('Удалить все сохранённые слова?')) {
+        localStorage.removeItem('savedVerbs');
+        renderDictionary();
+      }
+    });
+
+    navBtns.forEach(btn => {
+      if (btn.dataset.target === 'screen-dictionary') {
+        btn.addEventListener('click', renderDictionary);
+      }
+    });
+
+    renderDictionary();
+
+    /* ── Home screen ── */
+    let _wodWord = '';
+
+    function renderHome() {
+      const allWords = [...verbs, ...nouns];
+      const dayIdx   = Math.floor(Date.now() / 86400000) % allWords.length;
+      const wod      = allWords[dayIdx];
+      _wodWord = wod.hu;
+
+      document.getElementById('wod-hu').textContent            = wod.hu;
+      document.getElementById('wod-transcription').textContent = wod.transcription || '';
+      document.getElementById('wod-ru').textContent            = wod.ru;
+
+      // Noun count
+      document.getElementById('home-nouns-count').textContent  = `${nouns.length} слов`;
+
+      // Dictionary counter
+      const saved  = getSavedVerbs();
+      const count  = saved.length;
+      const dictSub  = document.getElementById('home-dict-sub');
+      const dictInfo = document.getElementById('home-dict-info');
+      if (count > 0) {
+        dictSub.textContent  = `${count} ${pluralWords(count)}`;
+        dictInfo.textContent = `В словаре ${count} ${pluralWords(count)}`;
+      } else {
+        dictSub.textContent  = 'сохранённые слова';
+        dictInfo.textContent = '';
+      }
+    }
+
+    document.getElementById('wod-listen-btn').addEventListener('click', () => {
+      if (!_wodWord || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(_wodWord);
+      u.lang = 'hu-HU'; u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    });
+
+    // Home quick-access cards → navigate like bottom nav
+    document.querySelectorAll('.home-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const targetId = card.dataset.target;
+        screens.forEach(s => s.classList.remove('active'));
+        navBtns.forEach(b => b.classList.remove('active'));
+        document.getElementById(targetId).classList.add('active');
+        navBtns.forEach(b => {
+          if (b.dataset.target === targetId) b.classList.add('active');
+        });
+        if (targetId === 'screen-dictionary') renderDictionary();
+      });
+    });
+
+    // Refresh home when bottom-nav home tab is tapped
+    navBtns.forEach(btn => {
+      if (btn.dataset.target === 'screen-home') {
+        btn.addEventListener('click', renderHome);
+      }
+    });
+
+    renderHome();
+  </script>
+</body>
+</html>
