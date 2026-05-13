@@ -3060,6 +3060,9 @@
       apiInput.addEventListener('change', () =>
         localStorage.setItem(GEMINI_KEY, apiInput.value.trim())
       );
+      apiInput.addEventListener('input', () =>
+        localStorage.setItem(GEMINI_KEY, apiInput.value.trim())
+      );
 
       settingsTgl.addEventListener('click', () => {
         settingsBody.classList.toggle('open');
@@ -3127,10 +3130,14 @@
         resultEl.style.display = 'none';
         lastResult = null;
 
+        console.log('[Gemini] query() called, text:', text);
+        console.log('[Gemini] key present:', !!key, '| length:', key.length);
+
         if (!key) {
+          console.warn('[Gemini] No API key — aborting');
           showInfo(
             text,
-            '<span style="color:#aaa">Введите Gemini API ключ в настройках ниже.<br>' +
+            '<span style="color:#aaa">Введите API ключ в настройках.<br>' +
             'Бесплатный ключ: <a href="https://aistudio.google.com" target="_blank" ' +
             'rel="noopener" style="color:var(--orange)">aistudio.google.com</a></span>',
             false
@@ -3142,6 +3149,9 @@
 
         loadingEl.style.display = 'flex';
 
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+        console.log('[Gemini] endpoint:', endpoint.replace(key, key.substring(0,6) + '…'));
+
         const prompt =
           `Пользователь написал или произнёс венгерское слово или фразу: "${text}"\n` +
           `Ответь строго в этом формате (без лишних слов):\n` +
@@ -3150,21 +3160,31 @@
           `3. Пример: [пример на венгерском] — [перевод примера]`;
 
         try {
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            }
-          );
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          console.log('[Gemini] sending POST…');
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+          });
+          console.log('[Gemini] response status:', res.status);
+          if (!res.ok) {
+            const status = res.status;
+            console.error('[Gemini] HTTP error:', status);
+            if (status === 429) throw new Error('429');
+            if (status === 400 || status === 403) throw new Error('400');
+            throw new Error(`HTTP ${status}`);
+          }
           const data  = await res.json();
           const raw   = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          console.log('[Gemini] raw response length:', raw.length);
           renderResult(text, raw);
         } catch (err) {
-          showInfo(text,
-            `<span style="color:#c83232">Ошибка: ${err.message}</span>`, false);
+          console.error('[Gemini] catch:', err.message);
+          const msg =
+            err.message === '429' ? 'Превышен лимит запросов, подождите минуту' :
+            err.message === '400' ? 'Неверный API ключ' :
+            `Ошибка: ${err.message}`;
+          showInfo(text, `<span style="color:#c83232">${msg}</span>`, false);
         } finally {
           loadingEl.style.display = 'none';
         }
@@ -3314,7 +3334,11 @@
         const key = document.getElementById('asst-api-input').value.trim()
           || localStorage.getItem('geminiApiKey') || '';
 
+        console.log('[Gemini/camera] queryCameraText() called');
+        console.log('[Gemini/camera] key present:', !!key, '| length:', key.length);
+
         if (!key) {
+          console.warn('[Gemini/camera] No API key — aborting');
           showCameraResult(rawText, null);
           document.getElementById('asst-settings-body').classList.add('open');
           document.getElementById('asst-settings-arrow').classList.add('open');
@@ -3324,26 +3348,40 @@
         currentWord = rawText.split(/\n|\s/).filter(Boolean)[0]?.substring(0, 40) || '';
         loadingEl.style.display = 'flex';
 
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+        console.log('[Gemini/camera] endpoint:', endpoint.replace(key, key.substring(0,6) + '…'));
+
         const prompt =
           `Это текст с фотографии на венгерском языке: "${rawText}".\n` +
           `Переведи на русский язык. Если есть отдельные слова — дай перевод каждого. ` +
           `Объясни контекст если нужно.`;
 
         try {
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            }
-          );
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          console.log('[Gemini/camera] sending POST…');
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+          });
+          console.log('[Gemini/camera] response status:', res.status);
+          if (!res.ok) {
+            const status = res.status;
+            console.error('[Gemini/camera] HTTP error:', status);
+            if (status === 429) throw new Error('429');
+            if (status === 400 || status === 403) throw new Error('400');
+            throw new Error(`HTTP ${status}`);
+          }
           const data     = await res.json();
           const response = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          console.log('[Gemini/camera] raw response length:', response.length);
           showCameraResult(rawText, response);
         } catch (err) {
-          showCameraResult(rawText, null, err.message);
+          console.error('[Gemini/camera] catch:', err.message);
+          const msg =
+            err.message === '429' ? 'Превышен лимит запросов, подождите минуту' :
+            err.message === '400' ? 'Неверный API ключ' :
+            err.message;
+          showCameraResult(rawText, null, msg);
         } finally {
           loadingEl.style.display = 'none';
         }
