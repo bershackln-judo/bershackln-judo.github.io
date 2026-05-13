@@ -1543,16 +1543,16 @@
           <span class="asst-settings-arrow" id="asst-settings-arrow">›</span>
         </div>
         <div class="asst-settings-body" id="asst-settings-body">
-          <label class="asst-settings-label" for="asst-api-input">Gemini API ключ</label>
+          <label class="asst-settings-label" for="asst-api-input">Claude API ключ</label>
           <input
             class="asst-api-input" id="asst-api-input"
             type="password"
-            placeholder="AIza..."
+            placeholder="sk-ant-..."
             autocomplete="off"
           />
           <p class="asst-settings-hint">
-            Бесплатный ключ на
-            <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer">aistudio.google.com</a>
+            Получить ключ на
+            <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer">console.anthropic.com</a>
           </p>
         </div>
       </div>
@@ -3055,13 +3055,13 @@
       const settingsBody= document.getElementById('asst-settings-body');
       const settingsArrow=document.getElementById('asst-settings-arrow');
 
-      const GEMINI_KEY  = 'geminiApiKey';
-      apiInput.value    = localStorage.getItem(GEMINI_KEY) || '';
+      const CLAUDE_KEY  = 'claudeApiKey';
+      apiInput.value    = localStorage.getItem(CLAUDE_KEY) || '';
       apiInput.addEventListener('change', () =>
-        localStorage.setItem(GEMINI_KEY, apiInput.value.trim())
+        localStorage.setItem(CLAUDE_KEY, apiInput.value.trim())
       );
       apiInput.addEventListener('input', () =>
-        localStorage.setItem(GEMINI_KEY, apiInput.value.trim())
+        localStorage.setItem(CLAUDE_KEY, apiInput.value.trim())
       );
 
       settingsTgl.addEventListener('click', () => {
@@ -3123,23 +3123,23 @@
         if (e.key === 'Enter') { const t = inputEl.value.trim(); if (t) query(t); }
       });
 
-      /* ── Gemini ── */
+      /* ── Claude API ── */
       async function query(text) {
-        const key = apiInput.value.trim() || localStorage.getItem(GEMINI_KEY) || '';
+        const key = apiInput.value.trim() || localStorage.getItem(CLAUDE_KEY) || '';
         currentWord = text;
         resultEl.style.display = 'none';
         lastResult = null;
 
-        console.log('[Gemini] query() called, text:', text);
-        console.log('[Gemini] key present:', !!key, '| length:', key.length);
+        console.log('[Claude] query() called, text:', text);
+        console.log('[Claude] key present:', !!key, '| length:', key.length);
 
         if (!key) {
-          console.warn('[Gemini] No API key — aborting');
+          console.warn('[Claude] No API key — aborting');
           showInfo(
             text,
             '<span style="color:#aaa">Введите API ключ в настройках.<br>' +
-            'Бесплатный ключ: <a href="https://aistudio.google.com" target="_blank" ' +
-            'rel="noopener" style="color:var(--orange)">aistudio.google.com</a></span>',
+            'Ключ: <a href="https://console.anthropic.com" target="_blank" ' +
+            'rel="noopener" style="color:var(--orange)">console.anthropic.com</a></span>',
             false
           );
           settingsBody.classList.add('open');
@@ -3149,8 +3149,8 @@
 
         loadingEl.style.display = 'flex';
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-        console.log('[Gemini] endpoint:', endpoint.replace(key, key.substring(0,6) + '…'));
+        const endpoint = 'https://api.anthropic.com/v1/messages';
+        console.log('[Claude] endpoint:', endpoint);
 
         const prompt =
           `Пользователь написал или произнёс венгерское слово или фразу: "${text}"\n` +
@@ -3160,26 +3160,34 @@
           `3. Пример: [пример на венгерском] — [перевод примера]`;
 
         try {
-          console.log('[Gemini] sending POST…');
+          console.log('[Claude] sending POST…');
           const res = await fetch(endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            headers: {
+              'x-api-key': key,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 1024,
+              messages: [{ role: 'user', content: prompt }]
+            })
           });
-          console.log('[Gemini] response status:', res.status);
+          console.log('[Claude] response status:', res.status);
           if (!res.ok) {
             const status = res.status;
-            console.error('[Gemini] HTTP error:', status);
+            console.error('[Claude] HTTP error:', status);
             if (status === 429) throw new Error('429');
-            if (status === 400 || status === 403) throw new Error('400');
+            if (status === 400 || status === 401 || status === 403) throw new Error('400');
             throw new Error(`HTTP ${status}`);
           }
-          const data  = await res.json();
-          const raw   = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          console.log('[Gemini] raw response length:', raw.length);
+          const data = await res.json();
+          const raw  = data?.content?.[0]?.text || '';
+          console.log('[Claude] raw response length:', raw.length);
           renderResult(text, raw);
         } catch (err) {
-          console.error('[Gemini] catch:', err.message);
+          console.error('[Claude] catch:', err.message);
           const msg =
             err.message === '429' ? 'Превышен лимит запросов, подождите минуту' :
             err.message === '400' ? 'Неверный API ключ' :
@@ -3321,7 +3329,7 @@
             return;
           }
 
-          // Send to Gemini with camera prompt
+          // Send to Claude API with camera prompt
           await queryCameraText(text);
 
         } catch (err) {
@@ -3332,13 +3340,13 @@
 
       async function queryCameraText(rawText) {
         const key = document.getElementById('asst-api-input').value.trim()
-          || localStorage.getItem('geminiApiKey') || '';
+          || localStorage.getItem('claudeApiKey') || '';
 
-        console.log('[Gemini/camera] queryCameraText() called');
-        console.log('[Gemini/camera] key present:', !!key, '| length:', key.length);
+        console.log('[Claude/camera] queryCameraText() called');
+        console.log('[Claude/camera] key present:', !!key, '| length:', key.length);
 
         if (!key) {
-          console.warn('[Gemini/camera] No API key — aborting');
+          console.warn('[Claude/camera] No API key — aborting');
           showCameraResult(rawText, null);
           document.getElementById('asst-settings-body').classList.add('open');
           document.getElementById('asst-settings-arrow').classList.add('open');
@@ -3348,8 +3356,8 @@
         currentWord = rawText.split(/\n|\s/).filter(Boolean)[0]?.substring(0, 40) || '';
         loadingEl.style.display = 'flex';
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-        console.log('[Gemini/camera] endpoint:', endpoint.replace(key, key.substring(0,6) + '…'));
+        const endpoint = 'https://api.anthropic.com/v1/messages';
+        console.log('[Claude/camera] endpoint:', endpoint);
 
         const prompt =
           `Это текст с фотографии на венгерском языке: "${rawText}".\n` +
@@ -3357,26 +3365,34 @@
           `Объясни контекст если нужно.`;
 
         try {
-          console.log('[Gemini/camera] sending POST…');
+          console.log('[Claude/camera] sending POST…');
           const res = await fetch(endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            headers: {
+              'x-api-key': key,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 1024,
+              messages: [{ role: 'user', content: prompt }]
+            })
           });
-          console.log('[Gemini/camera] response status:', res.status);
+          console.log('[Claude/camera] response status:', res.status);
           if (!res.ok) {
             const status = res.status;
-            console.error('[Gemini/camera] HTTP error:', status);
+            console.error('[Claude/camera] HTTP error:', status);
             if (status === 429) throw new Error('429');
-            if (status === 400 || status === 403) throw new Error('400');
+            if (status === 400 || status === 401 || status === 403) throw new Error('400');
             throw new Error(`HTTP ${status}`);
           }
           const data     = await res.json();
-          const response = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          console.log('[Gemini/camera] raw response length:', response.length);
+          const response = data?.content?.[0]?.text || '';
+          console.log('[Claude/camera] raw response length:', response.length);
           showCameraResult(rawText, response);
         } catch (err) {
-          console.error('[Gemini/camera] catch:', err.message);
+          console.error('[Claude/camera] catch:', err.message);
           const msg =
             err.message === '429' ? 'Превышен лимит запросов, подождите минуту' :
             err.message === '400' ? 'Неверный API ключ' :
@@ -3413,7 +3429,7 @@
           infoRow.className = 'asst-result-row';
           infoRow.innerHTML =
             `<span class="asst-result-value" style="color:#aaa">` +
-            `Добавьте Gemini API ключ в настройках ниже</span>`;
+            `Добавьте Claude API ключ в настройках ниже</span>`;
           resultBody.appendChild(infoRow);
           resultActs.style.display = 'none';
         } else {
