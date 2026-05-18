@@ -820,6 +820,18 @@ main {
   margin-top: 8px;
 }
 
+.modal-antonym {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  margin-top: 8px;
+}
+
+.modal-antonym span {
+  font-weight: 600;
+  color: var(--graphite);
+}
+
 .modal-listen-btn {
   display: flex;
   align-items: center;

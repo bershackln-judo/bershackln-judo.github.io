@@ -1246,14 +1246,81 @@ const nouns = [
   { topic:'emotions', hu:'megértés',    ru:'понимание',       transcription:'[мэгэртэш]',  examples:[{hu:'Köszönöm a megértést.',ru:'Спасибо за понимание.'},{hu:'Megértéssel fogadom.',ru:'Я принимаю с пониманием.'},{hu:'A megértés fontos.',ru:'Понимание важно.'}] },
 ];
 
+/* ── Adjective data ── */
+const adjectives = [
+  // РАЗМЕР И ФОРМА
+  { topic:'adj', hu:'nagy',       ru:'большой',          transcription:'[надь]',       antonym:'kicsi (маленький)',     examples:[{hu:'Nagy ház.',ru:'Большой дом.'},{hu:'Ez egy nagy város.',ru:'Это большой город.'}] },
+  { topic:'adj', hu:'kicsi',      ru:'маленький',        transcription:'[кичи]',       antonym:'nagy (большой)',        examples:[{hu:'Kicsi kutya.',ru:'Маленькая собака.'},{hu:'Ez egy kicsi szoba.',ru:'Это маленькая комната.'}] },
+  { topic:'adj', hu:'hosszú',     ru:'длинный',          transcription:'[хоссу]',      antonym:'rövid (короткий)',      examples:[{hu:'Hosszú út.',ru:'Длинная дорога.'},{hu:'Hosszú haj.',ru:'Длинные волосы.'}] },
+  { topic:'adj', hu:'rövid',      ru:'короткий',         transcription:'[рёвид]',      antonym:'hosszú (длинный)',      examples:[{hu:'Rövid film.',ru:'Короткий фильм.'},{hu:'Rövid szoknya.',ru:'Короткая юбка.'}] },
+  { topic:'adj', hu:'magas',      ru:'высокий',          transcription:'[могош]',      antonym:'alacsony (низкий)',     examples:[{hu:'Magas épület.',ru:'Высокое здание.'},{hu:'Magas férfi.',ru:'Высокий мужчина.'}] },
+  { topic:'adj', hu:'alacsony',   ru:'низкий',           transcription:'[олочонь]',    antonym:'magas (высокий)',       examples:[{hu:'Alacsony ár.',ru:'Низкая цена.'},{hu:'Alacsony asztal.',ru:'Низкий стол.'}] },
+  { topic:'adj', hu:'széles',     ru:'широкий',          transcription:'[сэлэш]',      antonym:'keskeny (узкий)',       examples:[{hu:'Széles utca.',ru:'Широкая улица.'},{hu:'Széles folyó.',ru:'Широкая река.'}] },
+  { topic:'adj', hu:'keskeny',    ru:'узкий',            transcription:'[кэшкэнь]',    antonym:'széles (широкий)',      examples:[{hu:'Keskeny ajtó.',ru:'Узкая дверь.'},{hu:'Keskeny út.',ru:'Узкая дорога.'}] },
+  { topic:'adj', hu:'vastag',     ru:'толстый',          transcription:'[воштог]',     antonym:'vékony (тонкий)',       examples:[{hu:'Vastag könyv.',ru:'Толстая книга.'},{hu:'Vastag fal.',ru:'Толстая стена.'}] },
+  { topic:'adj', hu:'vékony',     ru:'тонкий',           transcription:'[вэконь]',     antonym:'vastag (толстый)',      examples:[{hu:'Vékony papír.',ru:'Тонкая бумага.'},{hu:'Vékony szelet.',ru:'Тонкий ломтик.'}] },
+  // КАЧЕСТВО
+  { topic:'adj', hu:'jó',         ru:'хороший',          transcription:'[йо]',         antonym:'rossz (плохой)',        examples:[{hu:'Jó ember.',ru:'Хороший человек.'},{hu:'Ez jó ötlet.',ru:'Это хорошая идея.'}] },
+  { topic:'adj', hu:'rossz',      ru:'плохой',           transcription:'[росс]',       antonym:'jó (хороший)',          examples:[{hu:'Rossz idő.',ru:'Плохая погода.'},{hu:'Rossz hír.',ru:'Плохая новость.'}] },
+  { topic:'adj', hu:'szép',       ru:'красивый',         transcription:'[сэп]',        antonym:'csúnya (некрасивый)',   examples:[{hu:'Szép kilátás.',ru:'Красивый вид.'},{hu:'Szép lány.',ru:'Красивая девушка.'}] },
+  { topic:'adj', hu:'csúnya',     ru:'некрасивый',       transcription:'[чунья]',      antonym:'szép (красивый)',       examples:[{hu:'Csúnya idő.',ru:'Некрасивая погода.'},{hu:'Csúnya épület.',ru:'Некрасивое здание.'}] },
+  { topic:'adj', hu:'új',         ru:'новый',            transcription:'[уй]',         antonym:'régi (старый)',         examples:[{hu:'Új autó.',ru:'Новая машина.'},{hu:'Új barát.',ru:'Новый друг.'}] },
+  { topic:'adj', hu:'régi',       ru:'старый',           transcription:'[рэги]',       antonym:'új (новый)',            examples:[{hu:'Régi ház.',ru:'Старый дом.'},{hu:'Régi barát.',ru:'Старый друг.'}] },
+  { topic:'adj', hu:'drága',      ru:'дорогой',          transcription:'[драго]',      antonym:'olcsó (дешёвый)',       examples:[{hu:'Drága autó.',ru:'Дорогая машина.'},{hu:'Ez nagyon drága.',ru:'Это очень дорого.'}] },
+  { topic:'adj', hu:'olcsó',      ru:'дешёвый',          transcription:'[олчо]',       antonym:'drága (дорогой)',       examples:[{hu:'Olcsó étel.',ru:'Дешёвая еда.'},{hu:'Olcsó hotel.',ru:'Дешёвый отель.'}] },
+  { topic:'adj', hu:'könnyű',     ru:'лёгкий',           transcription:'[кёньню]',     antonym:'nehéz (тяжёлый)',       examples:[{hu:'Könnyű táska.',ru:'Лёгкая сумка.'},{hu:'Könnyű feladat.',ru:'Лёгкое задание.'}] },
+  { topic:'adj', hu:'nehéz',      ru:'тяжёлый / трудный',transcription:'[нэхэз]',      antonym:'könnyű (лёгкий)',       examples:[{hu:'Nehéz kérdés.',ru:'Трудный вопрос.'},{hu:'Nehéz bőrönd.',ru:'Тяжёлый чемодан.'}] },
+  { topic:'adj', hu:'gyors',      ru:'быстрый',          transcription:'[дьорш]',      antonym:'lassú (медленный)',     examples:[{hu:'Gyors autó.',ru:'Быстрая машина.'},{hu:'Gyors válasz.',ru:'Быстрый ответ.'}] },
+  { topic:'adj', hu:'lassú',      ru:'медленный',        transcription:'[лошшу]',      antonym:'gyors (быстрый)',       examples:[{hu:'Lassú internet.',ru:'Медленный интернет.'},{hu:'Lassú mozgás.',ru:'Медленное движение.'}] },
+  { topic:'adj', hu:'erős',       ru:'сильный',          transcription:'[эрёш]',       antonym:'gyenge (слабый)',       examples:[{hu:'Erős kávé.',ru:'Крепкий кофе.'},{hu:'Erős szél.',ru:'Сильный ветер.'}] },
+  { topic:'adj', hu:'gyenge',     ru:'слабый',           transcription:'[дьэнгэ]',     antonym:'erős (сильный)',        examples:[{hu:'Gyenge jelszó.',ru:'Слабый пароль.'},{hu:'Gyenge hang.',ru:'Слабый голос.'}] },
+  { topic:'adj', hu:'fontos',     ru:'важный',           transcription:'[фонтош]',     antonym:'— ',                   examples:[{hu:'Fontos kérdés.',ru:'Важный вопрос.'},{hu:'Ez nagyon fontos.',ru:'Это очень важно.'}] },
+  { topic:'adj', hu:'érdekes',    ru:'интересный',       transcription:'[эрдэкэш]',    antonym:'— ',                   examples:[{hu:'Érdekes film.',ru:'Интересный фильм.'},{hu:'Érdekes könyv.',ru:'Интересная книга.'}] },
+  // ТЕМПЕРАТУРА И СОСТОЯНИЕ
+  { topic:'adj', hu:'meleg',      ru:'тёплый / горячий', transcription:'[мэлэг]',      antonym:'hideg (холодный)',      examples:[{hu:'Meleg idő.',ru:'Тёплая погода.'},{hu:'Meleg tea.',ru:'Горячий чай.'}] },
+  { topic:'adj', hu:'hideg',      ru:'холодный',         transcription:'[хидэг]',      antonym:'meleg (тёплый)',        examples:[{hu:'Hideg víz.',ru:'Холодная вода.'},{hu:'Hideg tél.',ru:'Холодная зима.'}] },
+  { topic:'adj', hu:'forró',      ru:'горячий',          transcription:'[форро]',      antonym:'hideg (холодный)',      examples:[{hu:'Forró kávé.',ru:'Горячий кофе.'},{hu:'Forró nyár.',ru:'Жаркое лето.'}] },
+  { topic:'adj', hu:'friss',      ru:'свежий',           transcription:'[фришш]',      antonym:'— ',                   examples:[{hu:'Friss kenyér.',ru:'Свежий хлеб.'},{hu:'Friss levegő.',ru:'Свежий воздух.'}] },
+  { topic:'adj', hu:'tiszta',     ru:'чистый',           transcription:'[тисто]',      antonym:'piszkos (грязный)',     examples:[{hu:'Tiszta szoba.',ru:'Чистая комната.'},{hu:'Tiszta víz.',ru:'Чистая вода.'}] },
+  { topic:'adj', hu:'piszkos',    ru:'грязный',          transcription:'[пискош]',     antonym:'tiszta (чистый)',       examples:[{hu:'Piszkos ruha.',ru:'Грязная одежда.'},{hu:'Piszkos kéz.',ru:'Грязные руки.'}] },
+  { topic:'adj', hu:'száraz',     ru:'сухой',            transcription:'[сарос]',      antonym:'nedves (мокрый)',       examples:[{hu:'Száraz idő.',ru:'Сухая погода.'},{hu:'Száraz bőr.',ru:'Сухая кожа.'}] },
+  { topic:'adj', hu:'nedves',     ru:'мокрый',           transcription:'[нэдвэш]',     antonym:'száraz (сухой)',        examples:[{hu:'Nedves ruha.',ru:'Мокрая одежда.'},{hu:'Nedves út.',ru:'Мокрая дорога.'}] },
+  { topic:'adj', hu:'nyitva',     ru:'открыто',          transcription:'[ньитво]',     antonym:'zárva (закрыто)',       examples:[{hu:'A bolt nyitva van.',ru:'Магазин открыт.'},{hu:'Az ajtó nyitva.',ru:'Дверь открыта.'}] },
+  { topic:'adj', hu:'zárva',      ru:'закрыто',          transcription:'[зарво]',      antonym:'nyitva (открыто)',      examples:[{hu:'A bolt zárva van.',ru:'Магазин закрыт.'},{hu:'Zárva tartják.',ru:'Держат закрытым.'}] },
+  // ЧУВСТВА И ХАРАКТЕР
+  { topic:'adj', hu:'boldog',     ru:'счастливый',       transcription:'[болдог]',     antonym:'szomorú (грустный)',   examples:[{hu:'Boldog vagyok.',ru:'Я счастлив.'},{hu:'Boldog születésnapot!',ru:'С днём рождения!'}] },
+  { topic:'adj', hu:'szomorú',    ru:'грустный',         transcription:'[сомору]',     antonym:'boldog (счастливый)',  examples:[{hu:'Szomorú vagyok.',ru:'Мне грустно.'},{hu:'Szomorú film.',ru:'Грустный фильм.'}] },
+  { topic:'adj', hu:'fáradt',     ru:'усталый',          transcription:'[фарот]',      antonym:'— ',                   examples:[{hu:'Fáradt vagyok.',ru:'Я устал.'},{hu:'Fáradt arc.',ru:'Усталое лицо.'}] },
+  { topic:'adj', hu:'beteg',      ru:'больной',          transcription:'[бэтэг]',      antonym:'egészséges (здоровый)',examples:[{hu:'Beteg vagyok.',ru:'Я болен.'},{hu:'Beteg gyerek.',ru:'Больной ребёнок.'}] },
+  { topic:'adj', hu:'egészséges', ru:'здоровый',         transcription:'[эгэсшэгэш]',  antonym:'beteg (больной)',       examples:[{hu:'Egészséges vagyok.',ru:'Я здоров.'},{hu:'Egészséges étel.',ru:'Здоровая еда.'}] },
+  { topic:'adj', hu:'hangos',     ru:'громкий',          transcription:'[хонгош]',     antonym:'csendes (тихий)',       examples:[{hu:'Hangos zene.',ru:'Громкая музыка.'},{hu:'Hangos szomszéd.',ru:'Громкий сосед.'}] },
+  { topic:'adj', hu:'csendes',    ru:'тихий',            transcription:'[чэндэш]',     antonym:'hangos (громкий)',      examples:[{hu:'Csendes utca.',ru:'Тихая улица.'},{hu:'Csendes hely.',ru:'Тихое место.'}] },
+  { topic:'adj', hu:'kedves',     ru:'добрый / милый',   transcription:'[кэдвэш]',     antonym:'— ',                   examples:[{hu:'Kedves ember.',ru:'Добрый человек.'},{hu:'Nagyon kedves!',ru:'Очень мило!'}] },
+  { topic:'adj', hu:'udvarias',   ru:'вежливый',         transcription:'[удвориош]',   antonym:'— ',                   examples:[{hu:'Udvarias válasz.',ru:'Вежливый ответ.'},{hu:'Legyen szíves!',ru:'Будьте любезны!'}] },
+  { topic:'adj', hu:'barátságos', ru:'дружелюбный',      transcription:'[борачшагош]', antonym:'— ',                   examples:[{hu:'Barátságos város.',ru:'Дружелюбный город.'},{hu:'Barátságos kutya.',ru:'Дружелюбная собака.'}] },
+  // ЦВЕТА И ВНЕШНИЙ ВИД
+  { topic:'adj', hu:'piros',      ru:'красный',          transcription:'[пирош]',      antonym:'— ',                   examples:[{hu:'Piros alma.',ru:'Красное яблоко.'},{hu:'Piros autó.',ru:'Красная машина.'}] },
+  { topic:'adj', hu:'kék',        ru:'синий',            transcription:'[кэк]',        antonym:'— ',                   examples:[{hu:'Kék ég.',ru:'Синее небо.'},{hu:'Kék szem.',ru:'Синие глаза.'}] },
+  { topic:'adj', hu:'zöld',       ru:'зелёный',          transcription:'[зёльд]',      antonym:'— ',                   examples:[{hu:'Zöld fű.',ru:'Зелёная трава.'},{hu:'Zöld szín.',ru:'Зелёный цвет.'}] },
+  { topic:'adj', hu:'fehér',      ru:'белый',            transcription:'[фэхэр]',      antonym:'fekete (чёрный)',       examples:[{hu:'Fehér hó.',ru:'Белый снег.'},{hu:'Fehér ing.',ru:'Белая рубашка.'}] },
+  { topic:'adj', hu:'fekete',     ru:'чёрный',           transcription:'[фэкэтэ]',     antonym:'fehér (белый)',         examples:[{hu:'Fekete kávé.',ru:'Чёрный кофе.'},{hu:'Fekete macska.',ru:'Чёрная кошка.'}] },
+  { topic:'adj', hu:'sárga',      ru:'жёлтый',           transcription:'[шарго]',      antonym:'— ',                   examples:[{hu:'Sárga citrom.',ru:'Жёлтый лимон.'},{hu:'Sárga lap.',ru:'Жёлтый лист.'}] },
+  { topic:'adj', hu:'barna',      ru:'коричневый',       transcription:'[борно]',      antonym:'— ',                   examples:[{hu:'Barna szemek.',ru:'Карие глаза.'},{hu:'Barna kenyér.',ru:'Чёрный хлеб.'}] },
+  { topic:'adj', hu:'szürke',     ru:'серый',            transcription:'[сюркэ]',      antonym:'— ',                   examples:[{hu:'Szürke ég.',ru:'Серое небо.'},{hu:'Szürke macska.',ru:'Серая кошка.'}] },
+  { topic:'adj', hu:'világos',    ru:'светлый',          transcription:'[виlagош]',    antonym:'sötét (тёмный)',        examples:[{hu:'Világos szoba.',ru:'Светлая комната.'},{hu:'Világos szín.',ru:'Светлый цвет.'}] },
+  { topic:'adj', hu:'sötét',      ru:'тёмный',           transcription:'[шётэт]',      antonym:'világos (светлый)',     examples:[{hu:'Sötét éjszaka.',ru:'Тёмная ночь.'},{hu:'Sötét szín.',ru:'Тёмный цвет.'}] },
+];
+
 /* ── Render nouns ── */
 const nounsList = document.getElementById('nouns-list');
 let activeNounTopic = 'all';
 
 function renderNouns() {
-  const list = activeNounTopic === 'all'
-    ? nouns
-    : nouns.filter(n => n.topic === activeNounTopic);
+  const list = activeNounTopic === 'adj'
+    ? adjectives
+    : activeNounTopic === 'all'
+      ? nouns
+      : nouns.filter(n => n.topic === activeNounTopic);
   nounsList.innerHTML = '';
   if (!list.length) {
     nounsList.innerHTML = '<p class="no-results">Ничего не найдено</p>';
@@ -1298,9 +1365,17 @@ function getSavedVerbs() {
 function openModal(verb) {
   currentVerb = verb;
 
-  document.getElementById('modal-word').textContent         = verb.hu;
+  document.getElementById('modal-word').textContent          = verb.hu;
   document.getElementById('modal-transcription').textContent = verb.transcription;
-  document.getElementById('modal-translation').textContent  = verb.ru;
+  document.getElementById('modal-translation').textContent   = verb.ru;
+
+  const antonymEl = document.getElementById('modal-antonym');
+  if (verb.antonym && verb.antonym.trim() && verb.antonym.trim() !== '—' && verb.antonym.trim() !== '— ') {
+    antonymEl.innerHTML = `Антоним: <span>${verb.antonym}</span>`;
+    antonymEl.style.display = 'block';
+  } else {
+    antonymEl.style.display = 'none';
+  }
 
   const examplesEl = document.getElementById('modal-examples');
   examplesEl.innerHTML = verb.examples.map(ex => `
@@ -1996,7 +2071,7 @@ function renderHome() {
   document.getElementById('wod-ru').textContent            = wod.ru;
 
   // Noun count
-  document.getElementById('home-nouns-count').textContent  = `${nouns.length} слов`;
+  document.getElementById('home-nouns-count').textContent  = `${nouns.length + adjectives.length} слов`;
 
   // Dictionary counter
   const saved  = getSavedVerbs();
