@@ -1433,6 +1433,25 @@ document.getElementById('modal-save-btn').addEventListener('click', () => {
   updateSaveBtn(currentVerb);
   renderDictionary();
 });
+/* ── DeepL translation (via /api/translate proxy) ── */
+async function translateWithDeepL(text, sourceLang, targetLang) {
+  const isCyrillic = /[а-яёА-ЯЁ]/.test(text);
+  const src = sourceLang || (isCyrillic ? 'RU' : 'HU');
+  const tgt = targetLang || (isCyrillic ? 'HU' : 'RU');
+
+  console.log('[DeepL] translating…', `${src}→${tgt}`);
+  const res = await fetch('/api/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, source_lang: src, target_lang: tgt })
+  });
+  if (!res.ok) throw new Error(`DeepL proxy ${res.status}`);
+  const data = await res.json();
+  const result = data.translations?.[0]?.text || '';
+  console.log('[DeepL] result:', result);
+  return result;
+}
+
 /* ── Assistant screen ── */
 (function () {
   const micBtn      = document.getElementById('asst-mic-btn');
@@ -1520,71 +1539,71 @@ document.getElementById('modal-save-btn').addEventListener('click', () => {
     if (e.key === 'Enter') { const t = inputEl.value.trim(); if (t) query(t); }
   });
 
-  /* ── Gemini ── */
+  /* ── DeepL + Gemini ── */
   async function query(text) {
     const key = apiInput.value.trim() || localStorage.getItem(GEMINI_KEY) || '';
     currentWord = text;
     resultEl.style.display = 'none';
     lastResult = null;
 
-    console.log('[Gemini] query() called, text:', text);
-    console.log('[Gemini] key present:', !!key, '| length:', key.length);
+    console.log('[query] text:', text, '| gemini key:', !!key);
+    loadingEl.style.display = 'flex';
 
-    if (!key) {
-      console.warn('[Gemini] No API key — aborting');
-      showInfo(
-        text,
-        '<span style="color:#aaa">Введите API ключ в настройках.<br>' +
-        'Бесплатный ключ: <a href="https://aistudio.google.com" target="_blank" ' +
-        'rel="noopener" style="color:var(--orange)">aistudio.google.com</a></span>',
-        false
-      );
-      settingsBody.classList.add('open');
-      settingsArrow.classList.add('open');
+    let translation = '', transcription = '', example = '';
+
+    // ── Шаг 1: DeepL — перевод ──
+    try {
+      translation = await translateWithDeepL(text);
+    } catch (err) {
+      console.warn('[DeepL] ошибка:', err.message);
+    }
+
+    // ── Шаг 2: Gemini — транскрипция + примеры ──
+    if (key) {
+      const prompt =
+        `Венгерское слово или фраза: "${text}"\n` +
+        (translation ? `Перевод: ${translation}\n` : '') +
+        `Ответь строго в этом формате (без лишних слов):\n` +
+        (!translation ? `1. Перевод: [перевод на русский]\n` : '') +
+        `2. Транскрипция: [произношение русскими буквами]\n` +
+        `3. Пример: [пример на венгерском] — [перевод примера на русский]`;
+
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+        console.log('[Gemini] sending POST…');
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        console.log('[Gemini] status:', res.status);
+        if (res.ok) {
+          const data = await res.json();
+          const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const parsed = parseRaw(raw);
+          if (!translation) translation = parsed.translation;
+          transcription = parsed.transcription;
+          example       = parsed.example;
+        } else {
+          console.warn('[Gemini] HTTP', res.status);
+        }
+      } catch (err) {
+        console.warn('[Gemini] ошибка:', err.message);
+      }
+    }
+
+    loadingEl.style.display = 'none';
+
+    if (!translation) {
+      showInfo(text,
+        '<span style="color:#aaa">Не удалось перевести.<br>' +
+        (key ? '' : 'Добавьте Gemini ключ в настройках для транскрипции и примеров.') +
+        '</span>', false);
+      if (!key) { settingsBody.classList.add('open'); settingsArrow.classList.add('open'); }
       return;
     }
 
-    loadingEl.style.display = 'flex';
-
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-    console.log('[Gemini] endpoint:', endpoint.replace(key, key.substring(0,6) + '…'));
-
-    const prompt =
-      `Пользователь написал или произнёс венгерское слово или фразу: "${text}"\n` +
-      `Ответь строго в этом формате (без лишних слов):\n` +
-      `1. Перевод: [перевод на русский]\n` +
-      `2. Транскрипция: [произношение русскими буквами]\n` +
-      `3. Пример: [пример на венгерском] — [перевод примера]`;
-
-    try {
-      console.log('[Gemini] sending POST…');
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-      });
-      console.log('[Gemini] response status:', res.status);
-      if (!res.ok) {
-        const status = res.status;
-        console.error('[Gemini] HTTP error:', status);
-        if (status === 429) throw new Error('429');
-        if (status === 400 || status === 403) throw new Error('400');
-        throw new Error(`HTTP ${status}`);
-      }
-      const data = await res.json();
-      const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      console.log('[Gemini] raw response length:', raw.length);
-      renderResult(text, raw);
-    } catch (err) {
-      console.error('[Gemini] catch:', err.message);
-      const msg =
-        err.message === '429' ? 'Превышен лимит запросов, подождите минуту' :
-        err.message === '400' ? 'Неверный API ключ' :
-        `Ошибка: ${err.message}`;
-      showInfo(text, `<span style="color:#c83232">${msg}</span>`, false);
-    } finally {
-      loadingEl.style.display = 'none';
-    }
+    renderResult(text, null, { translation, transcription, example });
   }
 
   function parseRaw(raw) {
@@ -1601,8 +1620,8 @@ document.getElementById('modal-save-btn').addEventListener('click', () => {
     return { translation: translation || raw.trim(), transcription, example };
   }
 
-  function renderResult(word, raw) {
-    const { translation, transcription, example } = parseRaw(raw);
+  function renderResult(word, raw, direct) {
+    const { translation, transcription, example } = direct || parseRaw(raw);
     lastResult = { word, translation, transcription, example };
 
     resultWord.textContent = word;
@@ -2003,10 +2022,40 @@ document.getElementById('dict-list').addEventListener('click', e => {
     saveBtn.disabled = !(field1.value.trim() && field2.value.trim());
   }
 
+  /* ── DeepL автоперевод ── */
+  let deeplTimer = null;
+
+  async function autoTranslate() {
+    const text = field1.value.trim();
+    if (!text) { field2.value = ''; checkInputs(); return; }
+
+    // Показываем что идёт перевод
+    field2.placeholder = 'Перевожу…';
+    field2.disabled = true;
+
+    try {
+      const sourceLang = dir === 'hu->ru' ? 'HU' : 'RU';
+      const targetLang = dir === 'hu->ru' ? 'RU' : 'HU';
+      const translation = await translateWithDeepL(text, sourceLang, targetLang);
+      if (translation) field2.value = translation;
+    } catch (err) {
+      console.warn('[DeepL/form]', err.message);
+    } finally {
+      field2.placeholder = config[dir].placeholder2;
+      field2.disabled = false;
+      checkInputs();
+    }
+  }
+
   document.getElementById('dict-add-btn').addEventListener('click', openForm);
   cancelBtn.addEventListener('click', closeForm);
   overlay.addEventListener('click', e => { if (e.target === overlay) closeForm(); });
-  field1.addEventListener('input', checkInputs);
+
+  field1.addEventListener('input', () => {
+    checkInputs();
+    clearTimeout(deeplTimer);
+    deeplTimer = setTimeout(autoTranslate, 600);
+  });
   field2.addEventListener('input', checkInputs);
 
   field1.addEventListener('keydown', e => {
