@@ -1,0 +1,311 @@
+:root {
+  --green: #4f7f5f;
+  --green-dark: #2f5f42;
+  --dark: #17351f;
+  --muted: #8a8f8a;
+  --bg: #f4f8f4;
+  --card: #ffffff;
+  --line: #dde5dd;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --nav-height: 72px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--dark);
+  background:
+    radial-gradient(circle at top, rgba(79, 127, 95, 0.12), transparent 32rem),
+    var(--bg);
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  min-height: 100vh;
+  padding-bottom: var(--nav-height);
+}
+
+.screen {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 54px 16px 28px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1;
+  color: var(--green);
+  letter-spacing: -0.05em;
+}
+
+.hero p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.page-header {
+  margin-bottom: 18px;
+}
+
+.page-header h1 {
+  margin: 4px 0 0;
+  font-size: clamp(30px, 4vw, 42px);
+  letter-spacing: -0.04em;
+}
+
+.card {
+  border: 0;
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.word-of-day {
+  text-align: center;
+  margin-bottom: 28px;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.word-of-day:hover,
+.word-of-day:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1);
+}
+
+.word-of-day h2 {
+  margin: 8px 0 0;
+  font-size: clamp(40px, 6vw, 56px);
+  letter-spacing: -0.05em;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.transcription {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.word-of-day button,
+.assistant-card button,
+.word-actions button {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--green);
+  color: white;
+  padding: 9px 18px;
+  font-weight: 800;
+}
+
+.word-of-day button {
+  margin-top: 8px;
+  border-color: #0b6dff;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.home-card {
+  min-height: 104px;
+  text-align: left;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.home-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1);
+}
+
+.home-card strong {
+  margin-top: 14px;
+  font-size: 17px;
+}
+
+.home-card small,
+.card p {
+  color: var(--muted);
+}
+
+.emoji {
+  font-size: 28px;
+}
+
+.word-list {
+  display: grid;
+  gap: 12px;
+}
+
+.word-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.word-card h3 {
+  margin: 0 0 2px;
+  font-size: 28px;
+  letter-spacing: -0.04em;
+}
+
+.word-card p {
+  margin: 4px 0 0;
+}
+
+.example {
+  font-size: 14px;
+}
+
+.word-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.assistant-card {
+  display: grid;
+  gap: 14px;
+}
+
+.assistant-card h2,
+.empty-card h2 {
+  margin: 0;
+}
+
+.assistant-card textarea {
+  width: 100%;
+  min-height: 140px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  color: var(--dark);
+  background: #fbfdfb;
+  resize: vertical;
+}
+
+.empty-card {
+  text-align: center;
+}
+
+.bottom-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--nav-height);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  z-index: 10;
+}
+
+.bottom-nav button {
+  border: 0;
+  background: transparent;
+  color: #9aa19a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.bottom-nav button.active {
+  color: var(--green);
+  font-weight: 800;
+}
+
+.bottom-nav span {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.bottom-nav small {
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .screen {
+    padding-top: 30px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .word-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .word-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-card,
+  .word-of-day {
+    transition: none;
+  }
+
+  .home-card:hover,
+  .word-of-day:hover,
+  .word-of-day:focus-within {
+    transform: none;
+  }
+}

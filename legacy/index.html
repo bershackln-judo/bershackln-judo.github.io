@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Magyarázó</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4A7C59" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+  <!-- ── Screens ── -->
+  <main>
+    <section class="screen active" id="screen-home">
+      <div class="home-body">
+
+        <div class="home-title-block">
+          <h1 class="home-app-name">Magyarázó</h1>
+          <p class="home-tagline">Венгерский для жизни в Венгрии</p>
+        </div>
+
+        <div class="home-wod">
+          <div class="home-wod-label">Слово дня</div>
+          <div class="home-wod-hu" id="wod-hu">—</div>
+          <div class="home-wod-transcription" id="wod-transcription"></div>
+          <div class="home-wod-ru" id="wod-ru"></div>
+          <button class="home-wod-listen" id="wod-listen-btn">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="12" y1="19" x2="12" y2="23" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="8"  y1="23" x2="16" y2="23" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            ПОСЛУШАТЬ
+          </button>
+        </div>
+
+        <div class="home-cards">
+          <button class="home-card" data-target="screen-verbs">
+            <span class="home-card-icon">⚡</span>
+            <span class="home-card-title">Глаголы</span>
+            <span class="home-card-sub">100 слов</span>
+          </button>
+          <button class="home-card" data-target="screen-nouns">
+            <span class="home-card-icon">📦</span>
+            <span class="home-card-title">Существительные</span>
+            <span class="home-card-sub" id="home-nouns-count">— слов</span>
+          </button>
+          <button class="home-card" data-target="screen-assistant">
+            <span class="home-card-icon">🎙️</span>
+            <span class="home-card-title">Помощник</span>
+            <span class="home-card-sub">спроси что угодно</span>
+          </button>
+          <button class="home-card" data-target="screen-dictionary">
+            <span class="home-card-icon">📚</span>
+            <span class="home-card-title">Словарь</span>
+            <span class="home-card-sub" id="home-dict-sub">сохранённые слова</span>
+          </button>
+        </div>
+
+        <p class="home-dict-info" id="home-dict-info"></p>
+
+      </div>
+    </section>
+
+    <section class="screen" id="screen-verbs">
+      <div class="verbs-header">
+        <h1>Глаголы · Igék</h1>
+        <input
+          class="search-input"
+          type="search"
+          placeholder="Поиск глагола..."
+          id="verb-search"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+      </div>
+      <div class="verbs-list" id="verbs-list"></div>
+    </section>
+
+    <section class="screen" id="screen-nouns">
+      <div class="nouns-header">
+        <h1>Существительные · Főnevek</h1>
+        <div class="filter-tabs" id="noun-filter-tabs">
+          <button class="filter-tab active" data-topic="all">Все</button>
+          <button class="filter-tab" data-topic="people">Люди</button>
+          <button class="filter-tab" data-topic="body">Тело и здоровье</button>
+          <button class="filter-tab" data-topic="food">Еда и напитки</button>
+          <button class="filter-tab" data-topic="home">Дом и быт</button>
+          <button class="filter-tab" data-topic="city">Город и транспорт</button>
+          <button class="filter-tab" data-topic="work">Работа и инструменты</button>
+          <button class="filter-tab" data-topic="time">Время</button>
+          <button class="filter-tab" data-topic="nature">Природа</button>
+          <button class="filter-tab" data-topic="shop">Магазин</button>
+          <button class="filter-tab" data-topic="docs">Документы</button>
+          <button class="filter-tab" data-topic="emotions">Эмоции</button>
+        </div>
+      </div>
+      <div class="nouns-list" id="nouns-list"></div>
+    </section>
+
+    <section class="screen" id="screen-assistant">
+      <div class="asst-header">
+        <h1>Помощник · Asszisztens</h1>
+      </div>
+
+      <div class="asst-body">
+        <!-- Mic + Camera row -->
+        <div class="asst-buttons-row">
+          <div class="asst-mic-wrap">
+            <button class="asst-mic-btn" id="asst-mic-btn" aria-label="Запись голоса">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="12" y1="19" x2="12" y2="23" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="8"  y1="23" x2="16" y2="23" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <p class="asst-mic-status" id="asst-mic-status">Нажмите чтобы говорить</p>
+          </div>
+
+          <div class="asst-cam-wrap">
+            <button class="asst-cam-btn" id="asst-cam-btn" aria-label="Сфотографировать">
+              <svg viewBox="0 0 24 24">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
+            <p class="asst-cam-label">Сфотографировать</p>
+          </div>
+        </div>
+
+        <!-- Hidden camera input -->
+        <input type="file" id="asst-cam-input" accept="image/*" capture="environment" style="display:none" />
+
+        <!-- Image preview + OCR status -->
+        <div class="asst-img-preview" id="asst-img-preview" style="display:none">
+          <img id="asst-preview-img" alt="Фото" />
+          <div class="asst-ocr-bar" id="asst-ocr-bar">
+            <div class="asst-ocr-spinner"></div>
+            <span id="asst-ocr-text">Читаю текст...</span>
+          </div>
+        </div>
+
+        <!-- Text input -->
+        <div class="asst-input-row">
+          <input
+            class="asst-input" id="asst-input"
+            type="text"
+            placeholder="Введите венгерское слово или фразу..."
+            autocomplete="off" autocorrect="off" spellcheck="false"
+          />
+          <button class="asst-send-btn" id="asst-send-btn" aria-label="Отправить">
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="asst-loading" id="asst-loading" style="display:none">
+          <div class="asst-spinner"></div>
+          <p>Запрашиваю ответ...</p>
+        </div>
+
+        <!-- Result card -->
+        <div class="asst-result" id="asst-result" style="display:none">
+          <div class="asst-result-word" id="asst-result-word"></div>
+          <div id="asst-result-content"></div>
+          <div class="asst-result-actions" id="asst-result-actions">
+            <button class="asst-result-btn asst-listen-result-btn" id="asst-listen-result-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="12" y1="19" x2="12" y2="23" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="8"  y1="23" x2="16" y2="23" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>ПОСЛУШАТЬ</span>
+            </button>
+            <button class="asst-result-btn asst-save-result-btn" id="asst-save-result-btn">
+              <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              <span id="asst-save-label">СОХРАНИТЬ</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="asst-settings">
+        <div class="asst-settings-toggle" id="asst-settings-toggle">
+          <span>Настройки API</span>
+          <span class="asst-settings-arrow" id="asst-settings-arrow">›</span>
+        </div>
+        <div class="asst-settings-body" id="asst-settings-body">
+          <label class="asst-settings-label" for="asst-api-input">Gemini API ключ</label>
+          <input
+            class="asst-api-input" id="asst-api-input"
+            type="password"
+            placeholder="AIza..."
+            autocomplete="off"
+          />
+          <p class="asst-settings-hint">
+            Бесплатный ключ на
+            <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer">aistudio.google.com</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-dictionary">
+      <div class="dict-header">
+        <div class="dict-title-row">
+          <h1>Словарь · Szótár</h1>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="dict-count" id="dict-count"></span>
+            <button class="dict-add-btn" id="dict-add-btn">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              ДОБАВИТЬ
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="dict-list" id="dict-list"></div>
+      <div class="dict-footer" id="dict-footer">
+        <button class="dict-clear-btn" id="dict-clear-btn">ОЧИСТИТЬ ВСЁ</button>
+      </div>
+    </section>
+
+    <!-- ── Add-word form overlay ── -->
+    <div class="dict-form-overlay" id="dict-form-overlay">
+      <div class="dict-form-sheet">
+        <div class="dict-form-handle"></div>
+        <div class="dict-form-title">Добавить слово</div>
+
+        <!-- Direction toggle -->
+        <div class="dict-dir-toggle">
+          <button class="dict-dir-btn active" id="dict-dir-hu2ru">
+            <span class="dict-dir-flag">🇭🇺 → 🇷🇺</span>
+            Венгерский → Русский
+          </button>
+          <button class="dict-dir-btn" id="dict-dir-ru2hu">
+            <span class="dict-dir-flag">🇷🇺 → 🇭🇺</span>
+            Русский → Венгерский
+          </button>
+        </div>
+
+        <label class="dict-form-label" id="dict-form-label1" for="dict-form-field1">Венгерское слово</label>
+        <input
+          class="dict-form-input" id="dict-form-field1"
+          type="text"
+          placeholder="например: köszönöm"
+          autocomplete="off" autocorrect="off" spellcheck="false"
+        />
+        <label class="dict-form-label" id="dict-form-label2" for="dict-form-field2">Перевод на русский</label>
+        <input
+          class="dict-form-input" id="dict-form-field2"
+          type="text"
+          placeholder="например: спасибо"
+          autocomplete="off" spellcheck="false"
+        />
+        <div class="dict-form-actions">
+          <button class="dict-form-cancel" id="dict-form-cancel">ОТМЕНА</button>
+          <button class="dict-form-save" id="dict-form-save" disabled>СОХРАНИТЬ</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Modal ── -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-word" id="modal-word"></div>
+      <div class="modal-transcription" id="modal-transcription"></div>
+      <div class="modal-translation" id="modal-translation"></div>
+
+      <button class="modal-listen-btn" id="modal-listen-btn">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="19" x2="12" y2="23" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8" y1="23" x2="16" y2="23" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        ПОСЛУШАТЬ
+      </button>
+
+      <div class="modal-divider"></div>
+
+      <div class="modal-examples-title">Примеры</div>
+      <div id="modal-examples"></div>
+
+      <button class="modal-save-btn" id="modal-save-btn">
+        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        <span id="modal-save-label">СОХРАНИТЬ В СЛОВАРЬ</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Bottom Navigation ── -->
+  <nav>
+    <button class="nav-btn active" data-target="screen-home" aria-label="Главная">
+      <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+      <span class="nav-label">Главная</span>
+    </button>
+
+    <button class="nav-btn" data-target="screen-verbs" aria-label="Глаголы">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M18 14l3 3-3 3"/></svg>
+      <span class="nav-label">Глаголы</span>
+    </button>
+
+    <button class="nav-btn" data-target="screen-nouns" aria-label="Существительные">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+      <span class="nav-label">Слова</span>
+    </button>
+
+    <button class="nav-btn" data-target="screen-assistant" aria-label="Помощник">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+      <span class="nav-label">Помощник</span>
+    </button>
+
+    <button class="nav-btn" data-target="screen-dictionary" aria-label="Словарь">
+      <svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 012-2h13a1 1 0 011 1v14"/><path d="M4 19a2 2 0 002 2h13a1 1 0 001-1v-1"/><path d="M8 7h8M8 11h5"/></svg>
+      <span class="nav-label">Словарь</span>
+    </button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
