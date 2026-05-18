@@ -23,7 +23,12 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-family:
-    Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   color: var(--dark);
   background:
     radial-gradient(circle at top, rgba(79, 127, 95, 0.12), transparent 32rem),
@@ -90,6 +95,15 @@ button {
 .word-of-day {
   text-align: center;
   margin-bottom: 28px;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.word-of-day:hover,
+.word-of-day:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1);
 }
 
 .word-of-day h2 {
@@ -280,5 +294,18 @@ button {
 
   .word-actions {
     justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-card,
+  .word-of-day {
+    transition: none;
+  }
+
+  .home-card:hover,
+  .word-of-day:hover,
+  .word-of-day:focus-within {
+    transform: none;
   }
 }
